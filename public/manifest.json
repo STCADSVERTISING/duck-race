@@ -1,0 +1,18 @@
+{
+  "name": "Premium Duck Race",
+  "short_name": "Duck Race",
+  "description": "Premium Duck Race with Secret Admin Rigging Panel and side advertisements",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#82c800",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

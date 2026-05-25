@@ -1,0 +1,110 @@
+{
+  "total_trades": 153,
+  "profitable_trades": 89,
+  "avg_profit_pct": 0.08994334348452561,
+  "avg_win_time": 30,
+  "volatility_success": {
+    "vol_1": {
+      "total": 30,
+      "wins": 15,
+      "success_rate": 0.5,
+      "avg_profit": -0.170622579843655
+    },
+    "vol_0": {
+      "total": 69,
+      "wins": 41,
+      "success_rate": 0.5942028985507246,
+      "avg_profit": 0.213488655352798
+    },
+    "vol_2": {
+      "total": 35,
+      "wins": 23,
+      "success_rate": 0.6571428571428571,
+      "avg_profit": 0.3663682008779433
+    },
+    "vol_3": {
+      "total": 9,
+      "wins": 5,
+      "success_rate": 0.5555555555555556,
+      "avg_profit": -1.1193564041464745
+    },
+    "vol_4": {
+      "total": 10,
+      "wins": 5,
+      "success_rate": 0.5,
+      "avg_profit": -0.6874801502894133
+    }
+  },
+  "coin_history": {
+    "ZEC/USDT:USDT": {
+      "total": 3,
+      "wins": 0,
+      "win_rate": 0.0
+    },
+    "SOMI/USDT:USDT": {
+      "total": 2,
+      "wins": 2,
+      "win_rate": 100.0
+    },
+    "EDEN/USDT:USDT": {
+      "total": 7,
+      "wins": 4,
+      "win_rate": 57.14285714285714
+    },
+    "TRUTH/USDT:USDT": {
+      "total": 4,
+      "wins": 1,
+      "win_rate": 25.0
+    },
+    "SQD/USDT:USDT": {
+      "total": 1,
+      "wins": 0,
+      "win_rate": 0.0
+    },
+    "COAI/USDT:USDT": {
+      "total": 72,
+      "wins": 46,
+      "win_rate": 63.888888888888886
+    },
+    "DASH/USDT:USDT": {
+      "total": 3,
+      "wins": 2,
+      "win_rate": 66.66666666666666
+    },
+    "AIA/USDT:USDT": {
+      "total": 25,
+      "wins": 12,
+      "win_rate": 48.0
+    },
+    "MYX/USDT:USDT": {
+      "total": 5,
+      "wins": 2,
+      "win_rate": 40.0
+    },
+    "2Z/USDT:USDT": {
+      "total": 16,
+      "wins": 9,
+      "win_rate": 56.25
+    },
+    "ASTER/USDT:USDT": {
+      "total": 7,
+      "wins": 5,
+      "win_rate": 71.42857142857143
+    },
+    "XPL/USDT:USDT": {
+      "total": 1,
+      "wins": 1,
+      "win_rate": 100.0
+    },
+    "AVNT/USDT:USDT": {
+      "total": 1,
+      "wins": 0,
+      "win_rate": 0.0
+    },
+    "CAKE/USDT:USDT": {
+      "total": 6,
+      "wins": 5,
+      "win_rate": 83.33333333333334
+    }
+  }
+}

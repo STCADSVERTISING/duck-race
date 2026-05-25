@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🕹️ Duck Race Admin - Backstage System Console</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Outfit:wght@500;700;900&family=Sarabun:wght@300;400;700;800&display=swap" rel="stylesheet">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    
+    <!-- DASHBOARD HEADER -->
+    <header class="admin-header">
+      <div class="header-logo">
+        <h1>DUCK RACE <span>ADMIN PORTAL</span></h1>
+      </div>
+      <div class="header-stats">
+        <div class="stat-badge">
+          <span class="badge-dot" id="dot-admins">🟢</span>
+          <span id="txt-admins">Admins Online: 1</span>
+        </div>
+        <div class="stat-badge">
+          <span class="badge-dot" id="dot-games">🟢</span>
+          <span id="txt-games">Game Screens: 1</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- CONTENT GRID -->
+    <div class="dashboard-grid">
+      
+      <!-- LEFT COLUMN: RACE ENGINE CONTROLS -->
+      <section class="dashboard-card controls-card">
+        <h2>🎮 Race Engine Controls</h2>
+        <div class="remote-btn-group">
+          <button class="ctrl-btn btn-start" onclick="remoteStart()">🏁 START RACE</button>
+          <button class="ctrl-btn btn-reset" onclick="remoteReset()">🔄 RESET BOARD</button>
+        </div>
+
+        <div class="status-monitor">
+          <span class="monitor-label">Current Status:</span>
+          <span class="monitor-val" id="current-status-badge">IDLE</span>
+        </div>
+
+        <div class="settings-form">
+          <h3>⚙️ Race Time Settings</h3>
+          <div class="settings-row">
+            <div class="setting-col">
+              <label for="input-countdown">⏱️ Pre-Race Countdown (sec)</label>
+              <input type="number" id="input-countdown" value="5" min="1">
+            </div>
+            <div class="setting-col">
+              <label for="input-duration">🏁 Swim Time (sec)</label>
+              <input type="number" id="input-duration" value="15" min="5">
+            </div>
+          </div>
+          <button class="save-settings-btn" onclick="saveSettings()">💾 Save Settings</button>
+        </div>
+      </section>
+
+      <!-- CENTER COLUMN: SECRET RIGGING COMPONENT -->
+      <section class="dashboard-card rigging-card">
+        <div class="rigging-header">
+          <h2>🕵️ Secret Rigging Panel</h2>
+          <button class="clear-rig-btn" onclick="clearAllRigging()">❌ Clear All Rigging</button>
+        </div>
+        
+        <p class="rig-desc">
+          💡 Set 1st, 2nd, and 3rd place rankings covertly for any duck. Rigging operates seamlessly without detection.
+        </p>
+
+        <!-- ACTIVE RIGGED PREVIEW BAR -->
+        <div class="rigged-preview-bar">
+          <div class="preview-slot p-first">
+            <span class="slot-badge bg-gold">🥇 1st</span>
+            <span class="slot-name" id="preview-1st-name">Not Rigged (Random)</span>
+          </div>
+          <div class="preview-slot p-second">
+            <span class="slot-badge bg-silver">🥈 2nd</span>
+            <span class="slot-name" id="preview-2nd-name">Not Rigged (Random)</span>
+          </div>
+          <div class="preview-slot p-third">
+            <span class="slot-badge bg-bronze">🥉 3rd</span>
+            <span class="slot-name" id="preview-3rd-name">Not Rigged (Random)</span>
+          </div>
+        </div>
+
+        <!-- SEARCH BAR FOR LARGE ROSTERS -->
+        <div class="search-wrapper">
+          <input type="text" id="duck-search" placeholder="🔍 Search by name or duck number (up to 1,000 ducks)..." oninput="filterRoster()">
+        </div>
+
+        <!-- DUCK ROSTER GRID LIST -->
+        <div class="roster-wrapper">
+          <div class="roster-header-row">
+            <span>Duck Details</span>
+            <span>Rigging Actions</span>
+          </div>
+          <div class="roster-list" id="duck-roster-list">
+            <!-- Dynamic Duck Rows go here -->
+            <div class="empty-state">No ducks in the race. Please add ducks on the main screen.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT COLUMN: ADS TEXT EDITORS & LOGS -->
+      <div class="right-column-stack">
+        
+        <!-- CUSTOM ADS EDITORS -->
+        <section class="dashboard-card ads-card">
+          <h2>📢 Sidebar Ads Content Settings</h2>
+          <div class="ad-input-group">
+            <label for="ad-input-left">Left Sidebar Ads</label>
+            <textarea id="ad-input-left" rows="2" placeholder="Type scrolling ads text for left side..."></textarea>
+          </div>
+          <div class="ad-input-group">
+            <label for="ad-input-right">Right Sidebar Ads</label>
+            <textarea id="ad-input-right" rows="2" placeholder="Type scrolling ads text for right side..."></textarea>
+          </div>
+          <button class="save-ads-btn" onclick="saveAds()">📢 Update Ads Instantly</button>
+        </section>
+
+        <!-- HISTORICAL RACE LOGS -->
+        <section class="dashboard-card history-card">
+          <h2>📜 Historical Race Logs</h2>
+          <div class="history-list" id="history-log-list">
+            <div class="empty-state">No race history recorded.</div>
+          </div>
+        </section>
+
+      </div>
+
+    </div>
+
+    <!-- Notification popup -->
+    <div id="toast" class="toast hidden">Update successful!</div>
+
+    <footer class="admin-footer">
+      <p>🦆 Duck Race Covert Admin Command Suite • © 2026</p>
+    </footer>
+
+  </div>
+
+  <!-- Audio indicators -->
+  <audio id="sound-success" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-84.wav" preload="auto"></audio>
+
+  <!-- Scripts -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

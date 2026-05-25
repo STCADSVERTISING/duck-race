@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Duck Race - Championship Timer</title>
+  
+  <!-- PWA Meta Tags & Manifest -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#82c800">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Duck Race">
+  <link rel="apple-touch-icon" href="/icon.svg">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&family=Outfit:wght@400;600;700;800;900&family=Sarabun:wght@300;400;700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+  <div class="website-wrapper">
+    
+    <!-- 💻 TOP WHITE NAVBAR (Exact clone of online-stopwatch.com) -->
+    <header class="top-navbar">
+      <div class="nav-left">
+        <div class="stopwatch-logo">
+          <span class="green-up-arrow">▲</span>
+          <span class="red-down-arrow">▼</span>
+          <span class="logo-text">Duck Race</span>
+        </div>
+      </div>
+      <div class="nav-right">
+        <button class="nav-btn log-in-btn">👤 Log In!</button>
+        <button class="nav-btn join-premium-btn">⭐ Join Premium!</button>
+        <div class="search-box">
+          <input type="text" placeholder="Search">
+          <button class="search-btn">🔍</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 🗺️ NAVIGATION PILLS SCROLLBAR -->
+    <nav class="navigation-pills-bar">
+      <div class="pills-scroll-container">
+        <span class="nav-pill pill-red">Race Timers</span>
+        <span class="nav-pill pill-green">Classroom Timers</span>
+        <span class="nav-pill pill-purple">Holiday Timers</span>
+        <span class="nav-pill pill-orange">Random Name Pickers</span>
+        <span class="nav-pill pill-grey">Random Number Generators</span>
+        <span class="nav-pill pill-pink">Sensory Timers</span>
+        <span class="nav-pill pill-lightgreen">Clocks</span>
+        <span class="nav-pill pill-darkblue">Exam Timers</span>
+        <span class="nav-pill pill-teal">Chance Games</span>
+        <span class="nav-pill pill-purple">Group Generators</span>
+        <span class="nav-pill pill-orange">Presentation Timers</span>
+        <span class="nav-pill pill-green">Tally Counters</span>
+      </div>
+    </nav>
+
+    <!-- 📢 TOP LEADERBOARD AD (Dynamic Google Adsense style, rotates every 3.5s) -->
+    <section class="top-ad-banner" id="ad-top-slot">
+      <div class="ad-banner-inner" id="ad-top-content">
+        <!-- Will be populated dynamically by ads database -->
+        <div class="ad-google-card">
+          <span class="ads-label">ADVERTISEMENT</span>
+          <p class="ad-desc">Loading dynamic sponsor deals...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 🟦 BLUE TITLE BANNER -->
+    <section class="blue-title-banner">
+      <div class="banner-content">
+        <div class="title-row">
+          <div class="clock-icon">🕒</div>
+          <h2>Duck Race</h2>
+        </div>
+        <p class="desc-line1">
+          Swim your way to the finish line! With our amazing Duck Race! This online Duck Race Timer lets you have between 2 and 100 ducks racing in this fun little Duck Game! Free to use as always :-)
+        </p>
+        <p class="desc-line2">
+          Premium Members can now have up to 1000 ducks in the race!
+        </p>
+        <button class="try-timers-btn">Try our Race Timers Section!</button>
+      </div>
+    </section>
+
+    <!-- 🧩 MAIN THREE-COLUMN WORKSPACE -->
+    <div class="main-columns-layout">
+      
+      <!-- LEFT SKY-SCRAPER AD (160x600, rotates every 4s) -->
+      <aside class="sidebar-ad-holder" id="ad-left-slot">
+        <!-- Dynamic Ad content goes here -->
+      </aside>
+
+      <!-- CENTER COMPACT GAMEBOX -->
+      <main class="game-core-wrapper">
+        
+        <!-- THE RECTANGULAR GAME SCREEN CONSOLE -->
+        <div class="console-box" id="game-console-frame">
+          <canvas id="gameCanvas" width="1024" height="576"></canvas>
+
+          <!-- Scalable container for pixel-perfect responsiveness -->
+          <div class="console-scalable-content" id="console-scaler">
+            
+            <!-- 📟 INTEGRATED LOBBY PANEL (Drawn directly inside the rectangular console frame!) -->
+            <div class="console-lobby" id="lobby-panel">
+              
+              <!-- 📟 STOPWATCH WRAPPER CARD -->
+              <div class="stopwatch-wrapper">
+                <!-- Clock icon on left, stacked HH/MM/SS and speaker on right -->
+                <div class="stopwatch-top-row">
+                  <div class="alarm-clock-icon">⏰</div>
+                  <div class="console-timer-display" id="lobby-timer-screen">00:00:00</div>
+                  <div class="stopwatch-right-icons">
+                    <span class="hh-mm-ss-tag">HH<br>MM<br>SS</span>
+                    <button class="speaker-bell-btn">🔔</button>
+                  </div>
+                </div>
+                
+                <!-- KEYPAD COMPONENT (Green buttons) -->
+                <div class="keypad-container">
+                  <button class="keypad-btn btn-num" onclick="pressKey('5')">5</button>
+                  <button class="keypad-btn btn-num" onclick="pressKey('6')">6</button>
+                  <button class="keypad-btn btn-num" onclick="pressKey('7')">7</button>
+                  <button class="keypad-btn btn-num" onclick="pressKey('8')">8</button>
+                  <button class="keypad-btn btn-num" onclick="pressKey('9')">9</button>
+                  <button class="keypad-btn btn-set" onclick="pressKey('Set')" id="keypad-btn-set">Set</button>
+                  
+                  <button class="keypad-btn btn-num" onclick="pressKey('0')">0</button>
+                  <button class="keypad-btn btn-num" onclick="pressKey('1')">1</button>
+                  <button class="keypad-btn btn-num" onclick="pressKey('2')">2</button>
+                  <button class="keypad-btn btn-num" onclick="pressKey('3')">3</button>
+                  <button class="keypad-btn btn-num" onclick="pressKey('4')">4</button>
+                  <button class="keypad-btn btn-clear" onclick="pressKey('Clear')" id="keypad-btn-clear">Clear</button>
+                </div>
+              </div>
+
+              <!-- ⚙️ CONFIGURATION INTERIOR GRID -->
+              <div class="lobby-grid">
+                
+                <!-- COLUMN 1: PARCHMENT SCROLL -->
+                <div class="scroll-container-left">
+                  <div class="scroll-roller scroll-top"></div>
+                  <div class="parchment-body">
+                    <div class="mascot-costume-box">
+                      <button class="mascot-arrow-btn" onclick="cycleDuckPalette(-1)">◀</button>
+                      <div class="mascot-avatar-wrapper">
+                        <canvas id="avatar-preview-canvas" width="80" height="80"></canvas>
+                      </div>
+                      <button class="mascot-arrow-btn" onclick="cycleDuckPalette(1)">▶</button>
+                    </div>
+                    <span class="mascot-label" id="lbl-costume-theme">Colors & Costumes</span>
+                  </div>
+                  <div class="scroll-roller scroll-bottom"></div>
+                </div>
+
+                <!-- COLUMN 2: WHITE CONSOLE PANEL -->
+                <div class="white-console-panel">
+                  <!-- TABS (Numbers vs Names) -->
+                  <div class="config-tabs">
+                    <button class="cfg-tab-btn active" id="tab-btn-numbers" onclick="toggleConsoleTab('numbers')">Numbers</button>
+                    <button class="cfg-tab-btn" id="tab-btn-names" onclick="toggleConsoleTab('names')">Names</button>
+                  </div>
+
+                  <!-- CONTENT A: NUMBER SELECTOR (Slider from 2 to 100) -->
+                  <div class="tab-content active-content" id="tab-content-numbers">
+                    <div class="number-slider-row">
+                      <span class="slide-val-display" id="lbl-duck-count-slider">4</span>
+                      <div class="slider-track-wrap">
+                        <input type="range" id="duck-count-slider" min="2" max="100" value="4" oninput="onSliderChange()">
+                      </div>
+                      <span class="slide-max-display">100</span>
+                    </div>
+                    <div class="toggle-checkbox-row">
+                      <div class="cb-label-custom" onclick="toggleDuckNumbersCustom()">
+                        <span class="cb-text" id="lbl-show-numbers">Show Race Numbers:</span>
+                        <span class="cb-icon-btn active-tick" id="cb-icon-numbers">✔️</span>
+                      </div>
+                      <div class="cb-label-custom" onclick="toggleCustomLogoCustom()">
+                        <span class="cb-text" id="lbl-show-logo">Show Custom Logo:</span>
+                        <span class="cb-icon-btn" id="cb-icon-logo">❌</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- CONTENT B: NAME LIST TEXT AREA -->
+                  <div class="tab-content" id="tab-content-names">
+                    <textarea id="console-names-textarea" placeholder="Type duck names, one per line..." oninput="onConsoleNamesChange()"></textarea>
+                    <div class="roster-status-line" id="console-roster-status">Ducks in roster: 4</div>
+                  </div>
+                </div>
+
+                <!-- COLUMN 3: PREMIUM LOCKED CARD -->
+                <div class="premium-locked-card">
+                  <div class="premium-header" id="lbl-premium-header">Premium Only!</div>
+                  <div class="premium-body">
+                    <div class="premium-desc" id="lbl-premium-desc">Mass Start Race Feature:</div>
+                    <div class="premium-badge-row">
+                      <span class="premium-tag" id="lbl-premium-tag">Up to 1000 Characters!</span>
+                      <span class="premium-tag-num">1000</span>
+                      <span class="lock-icon-svg">🔒</span>
+                    </div>
+                    <div class="premium-plus-text">Plus...</div>
+                    <button class="btn-find-out" onclick="triggerSetTimerAndStart()" id="lbl-find-out-more">Find Out More!</button>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- BUTTON ACTIONS FOOTER -->
+              <div class="console-actions-footer">
+                <button class="lobby-action-btn btn-delete" onclick="deleteRoster()" id="lbl-btn-delete">Delete</button>
+                <button class="lobby-action-btn btn-save" onclick="saveRosterAndSettings()" id="lbl-btn-save">Update / Save</button>
+                <button class="lobby-action-btn btn-saveas" onclick="saveAsCustomList()" id="lbl-btn-saveas">Save as...</button>
+              </div>
+
+            </div>
+
+            <!-- ⏱️ COUNTDOWN OVERLAY -->
+            <div id="countdown-overlay" class="overlay-screen hidden">
+              <h1 id="countdown-number">5</h1>
+              <p id="countdown-sub">READY, SET, GO...</p>
+            </div>
+
+            <!-- 🏁 READY/RACING STATE OVERLAY -->
+            <div id="ready-racing-overlay" class="overlay-screen hidden">
+              <!-- Top-left controls: Gear, Music, Bell -->
+              <div class="ready-top-left-controls">
+                <button class="icon-control-btn btn-settings" onclick="alert('Settings menu opened!')">⚙️</button>
+                <button class="icon-control-btn btn-music" onclick="alert('Music volume adjusted!')">🎵</button>
+                <button class="icon-control-btn btn-bell" onclick="alert('Sound alerts toggled!')">🔔</button>
+              </div>
+              
+              <!-- Top center stopwatch screen -->
+              <div class="ready-timer-container">
+                <div class="ready-timer-display" id="ready-timer-screen">00:00:10</div>
+                <span class="ready-hhmmss-tag">HH<br>MM<br>SS</span>
+              </div>
+              
+              <!-- Left action buttons pane -->
+              <div class="ready-left-actions">
+                <button class="action-control-btn btn-shuffle" onclick="shuffleCharacters()">🔀 Shuffle Characters</button>
+                <button class="action-control-btn btn-start" id="btn-race-start" onclick="startRaceFromReady()">Start</button>
+                <button class="action-control-btn btn-clear-race" onclick="resetRoster()">Clear</button>
+              </div>
+            </div>
+
+            <!-- 🏆 WINNERS PODIUM OVERLAY -->
+            <div id="podium-overlay" class="overlay-screen hidden">
+              <div class="podium-card">
+                <h2 id="lbl-podium-title">🎉 RACE COMPLETED! 🎉</h2>
+                <div class="podium-places">
+                  <!-- 2nd Place -->
+                  <div class="podium-spot second">
+                    <div class="crown silver-crown">🥈</div>
+                    <div class="podium-duck-avatar" id="avatar-2nd"></div>
+                    <div class="podium-name" id="podium-2nd-name">Duck 2</div>
+                    <div class="podium-pedestal" id="lbl-podium-2nd">2nd</div>
+                  </div>
+                  <!-- 1st Place -->
+                  <div class="podium-spot first">
+                    <div class="crown gold-crown">👑</div>
+                    <div class="podium-duck-avatar" id="avatar-1st"></div>
+                    <div class="podium-name" id="podium-1st-name">Duck 1</div>
+                    <div class="podium-pedestal" id="lbl-podium-1st">1st</div>
+                  </div>
+                  <!-- 3rd Place -->
+                  <div class="podium-spot third">
+                    <div class="crown bronze-crown">🥉</div>
+                    <div class="podium-duck-avatar" id="avatar-3rd"></div>
+                    <div class="podium-name" id="podium-3rd-name">Duck 3</div>
+                    <div class="podium-pedestal" id="lbl-podium-3rd">3rd</div>
+                  </div>
+                </div>
+                <button class="podium-close-btn" onclick="resetRoster()" id="lbl-podium-close">GO TO LOBBY</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 🚥 EXTERNAL BRANDED PILLS (Go Fullscreen, Add to page, etc.) -->
+        <div class="lobby-external-pills">
+          <button class="ext-pill-btn pill-add" onclick="alert(currentLanguage === 'th' ? 'เพิ่มเกมนี้เข้าหน้าเพจของคุณแล้ว! ⭐' : 'Added to My Page! ⭐')" id="lbl-pill-add">⭐ Add to My Page!</button>
+          <button class="ext-pill-btn pill-fullscreen" onclick="toggleFullscreen()" id="lbl-pill-fullscreen">📺 Go Fullscreen!</button>
+          <button class="ext-pill-btn pill-adfree" onclick="alert(currentLanguage === 'th' ? 'ขอบคุณสำหรับการสนับสนุน! แพ็คเกจไม่มีโฆษณามีค่าบริการ $1.99/เดือน 🚫' : 'Thank you for your support! Ad-free package is $1.99/month 🚫')" id="lbl-pill-adfree">🚫 Go Ad Free!</button>
+        </div>
+
+      </main>
+
+      <!-- RIGHT SKY-SCRAPER AD (160x600, rotates every 4s) -->
+      <aside class="sidebar-ad-holder" id="ad-right-slot">
+        <!-- Dynamic Ad content goes here -->
+      </aside>
+
+    </div>
+
+    <!-- 📢 BOTTOM LEADERBOARD AD FOR TIKFLOW24.COM (Highly styled, custom banner) -->
+    <section class="bottom-ad-banner" id="ad-bottom-slot">
+      <div class="bottom-ad-banner-inner">
+        <a href="https://tikflow24.com" target="_blank" class="tikflow-banner-link">
+          <div class="tikflow-banner-card">
+            <span class="ads-badge">โปรโมชั่นพิเศษ</span>
+            <div class="tikflow-content">
+              <div class="tikflow-logo-group">
+                <span class="tikflow-rocket">🤖</span>
+                <span class="tikflow-brand">TikFlow<span class="brand-highlight">24</span>.com</span>
+              </div>
+              <div class="tikflow-features-row">
+                <span class="feature-tag">✨ ปั้นเพจออโต้</span>
+                <span class="feature-tag">🛒 ปักตะกร้าติ๊กตอกออโต้</span>
+                <span class="feature-tag price-tag">🔥 เริ่มต้นเพียง 10.-</span>
+              </div>
+              <p class="tikflow-headline">ระบบดันยอดวิว & ปักตะกร้าอัตโนมัติ 24 ชม. ปังง่าย ๆ ไม่ต้องเหนื่อยปั้นเอง!</p>
+              <button class="tikflow-btn">เริ่มใช้งานเลย! 📈</button>
+            </div>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- 📜 WEBSITE FOOTER -->
+    <footer class="website-footer">
+      <div class="footer-inner">
+        <p>© 2026 Duck Race | Privacy Policy | Terms of Use | Contact Us</p>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- Audio elements for high immersion -->
+  <audio id="sound-countdown" src="https://assets.mixkit.co/active_storage/sfx/1003/1003-84.wav" preload="auto"></audio>
+  <audio id="sound-go" src="https://assets.mixkit.co/active_storage/sfx/2012/2012-84.wav" preload="auto"></audio>
+  <audio id="sound-splash" src="https://assets.mixkit.co/active_storage/sfx/1429/1429-84.wav" preload="auto"></audio>
+  <audio id="sound-cheering" src="https://assets.mixkit.co/active_storage/sfx/1676/1676-84.wav" preload="auto"></audio>
+  <audio id="sound-quack" src="https://assets.mixkit.co/active_storage/sfx/1654/1654-84.wav" preload="auto"></audio>
+
+  <!-- Script Libraries -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+{
+  "binance": {
+    "api_key": "rzgkU4UWWdyoSV4XqjXgZiaYPzRLOHXzR948fjagAfzLy79t0wmL4sZ9vnNL2tGy",
+    "api_secret": "LYYusrq3Rh8u4zHaIwMv8qHNwLXvitT7qsQ4xAGULhUgdhWvb5XjGYatgCuQevDk"
+  },
+  "telegram": {
+    "bot_token": "8385954071:AAEUhyIeHH09MxYs220_pxOwSaT_HOa6L88",
+    "chat_id": "6920969353"
+  },
+  "trading": {
+    "mode": "futures",
+    "leverage": 8,
+    "margin_type": "isolated",
+    "capital_per_coin": 20,
+    "total_capital": 100,
+    "max_positions": 5,
+    "scan_limit": 30,
+    "min_volume_usdt": 50000000,
+    "check_interval_seconds": 60,
+    "volatile_mode": {
+      "enabled": true,
+      "min_volatility": 2.5,
+      "max_volatility": 10,
+      "min_win_rate": 55,
+      "min_trades_for_filter": 3,
+      "leverage_multiplier": 1.25
+    },
+    "sideways_mode": {
+      "enabled": true,
+      "min_volatility": 0.5,
+      "max_volatility": 2.5,
+      "min_win_rate": 60,
+      "min_trades_for_filter": 3,
+      "leverage_multiplier": 1.0
+    },
+    "dynamic_exit": {
+      "enabled": true,
+      "trailing_stop_pct": 30,
+      "min_profit_to_trail": 1.0,
+      "take_profit_early_pct": 60,
+      "reverse_signal_exit": true,
+      "cut_loss_early_pct": 50
+    }
+  }
+}

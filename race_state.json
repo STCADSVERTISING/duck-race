@@ -1,0 +1,274 @@
+{
+  "ducks": [
+    {
+      "id": "duck-1779725321338-0",
+      "name": "1",
+      "color": "#06b6d4",
+      "styleIndex": 0,
+      "pattern": "stripes",
+      "patternColor": "#fb7185",
+      "accessory": "party_hat",
+      "accessoryColor": "#4ecdc4",
+      "wingColor": "#f72585",
+      "beakColor": "#ff007f"
+    },
+    {
+      "id": "duck-1779725321842-1",
+      "name": "2",
+      "color": "#4cc157",
+      "styleIndex": 8,
+      "pattern": "zigzag",
+      "patternColor": "#4ecdc4",
+      "accessory": "glasses",
+      "accessoryColor": "#ffe66d",
+      "wingColor": "#39ff14",
+      "beakColor": "#ff6600"
+    },
+    {
+      "id": "duck-1779725322312-2",
+      "name": "3",
+      "color": "#fcd34d",
+      "styleIndex": 3,
+      "pattern": "polka_dots",
+      "patternColor": "#ff007f",
+      "accessory": "mohawk",
+      "accessoryColor": "#ff007f",
+      "wingColor": "#f72585",
+      "beakColor": "#ff6600"
+    },
+    {
+      "id": "duck-1779725323393-3",
+      "name": "4",
+      "color": "#00e5ff",
+      "styleIndex": 5,
+      "pattern": "polka_dots",
+      "patternColor": "#ff6b6b",
+      "accessory": "mohawk",
+      "accessoryColor": "#ffd700",
+      "wingColor": "#ff6b6b",
+      "beakColor": "#ff9f1c"
+    },
+    {
+      "id": "duck-1779725324017-4",
+      "name": "5",
+      "color": "#ff007f",
+      "styleIndex": 6,
+      "pattern": "zigzag",
+      "patternColor": "#a855f7",
+      "accessory": "mohawk",
+      "accessoryColor": "#ffe66d",
+      "wingColor": "#06b6d4",
+      "beakColor": "#ff9f1c"
+    },
+    {
+      "id": "duck-1779725324621-5",
+      "name": "6",
+      "color": "#ffd700",
+      "styleIndex": 9,
+      "pattern": "stripes",
+      "patternColor": "#f72585",
+      "accessory": "none",
+      "accessoryColor": "#f72585",
+      "wingColor": "#06b6d4",
+      "beakColor": "#ffd700"
+    },
+    {
+      "id": "duck-1779725326092-6",
+      "name": "7",
+      "color": "#ff007f",
+      "styleIndex": 9,
+      "pattern": "zigzag",
+      "patternColor": "#06b6d4",
+      "accessory": "mohawk",
+      "accessoryColor": "#06b6d4",
+      "wingColor": "#f72585",
+      "beakColor": "#ff9f1c"
+    },
+    {
+      "id": "duck-1779725327001-7",
+      "name": "8",
+      "color": "#06b6d4",
+      "styleIndex": 5,
+      "pattern": "stripes",
+      "patternColor": "#a855f7",
+      "accessory": "mohawk",
+      "accessoryColor": "#4ecdc4",
+      "wingColor": "#ff6b6b",
+      "beakColor": "#ff6600"
+    }
+  ],
+  "status": "finished",
+  "countdownDuration": 5,
+  "raceDuration": 30,
+  "riggedWinners": {
+    "first": null,
+    "second": null,
+    "third": null
+  },
+  "customAds": {
+    "left": "🔥 Quack-a-Lot Casino: Bet on your favorite duck! 100% Legit! 🔥",
+    "right": "💎 QuackCoin (QCK) to the Moon! Buy now and HODL! 💎"
+  },
+  "history": [
+    {
+      "id": "1779725367933",
+      "timestamp": "23:09:27",
+      "duckCount": 8,
+      "winners": {
+        "first": "4",
+        "second": "1",
+        "third": "7"
+      }
+    },
+    {
+      "id": "1779725286359",
+      "timestamp": "23:08:06",
+      "duckCount": 20,
+      "winners": {
+        "first": "6",
+        "second": "12",
+        "third": "20"
+      }
+    },
+    {
+      "id": "1779725126197",
+      "timestamp": "23:05:26",
+      "duckCount": 20,
+      "winners": {
+        "first": "15",
+        "second": "19",
+        "third": "2"
+      }
+    },
+    {
+      "id": "1779723435514",
+      "timestamp": "22:37:15",
+      "duckCount": 20,
+      "winners": {
+        "first": "10",
+        "second": "18",
+        "third": "1"
+      }
+    },
+    {
+      "id": "1779723316422",
+      "timestamp": "22:35:16",
+      "duckCount": 20,
+      "winners": {
+        "first": "19",
+        "second": "6",
+        "third": "9"
+      }
+    },
+    {
+      "id": "1779723227471",
+      "timestamp": "22:33:47",
+      "duckCount": 4,
+      "winners": {
+        "first": "3",
+        "second": "2",
+        "third": "4"
+      }
+    },
+    {
+      "id": "1779722486767",
+      "timestamp": "22:21:26",
+      "duckCount": 4,
+      "winners": {
+        "first": "3",
+        "second": "1",
+        "third": "2"
+      }
+    },
+    {
+      "id": "1779722390807",
+      "timestamp": "22:19:50",
+      "duckCount": 4,
+      "winners": {
+        "first": "2",
+        "second": "4",
+        "third": "3"
+      }
+    },
+    {
+      "id": "1779722179845",
+      "timestamp": "22:16:19",
+      "duckCount": 4,
+      "winners": {
+        "first": "4",
+        "second": "1",
+        "third": "2"
+      }
+    },
+    {
+      "id": "1779719453077",
+      "timestamp": "21:30:53",
+      "duckCount": 4,
+      "winners": {
+        "first": "4",
+        "second": "2",
+        "third": "3"
+      }
+    },
+    {
+      "id": "1779718740362",
+      "timestamp": "21:19:00",
+      "duckCount": 3,
+      "winners": {
+        "first": "มายอง",
+        "second": "ดิว",
+        "third": "กิล"
+      }
+    },
+    {
+      "id": "1779718528465",
+      "timestamp": "21:15:28",
+      "duckCount": 3,
+      "winners": {
+        "first": "ดิว",
+        "second": "มายอง",
+        "third": "กิล"
+      }
+    },
+    {
+      "id": "1779484984227",
+      "timestamp": "04:23:04",
+      "duckCount": 6,
+      "winners": {
+        "first": "6",
+        "second": "2",
+        "third": "5"
+      }
+    },
+    {
+      "id": "1779484564838",
+      "timestamp": "04:16:04",
+      "duckCount": 6,
+      "winners": {
+        "first": "1",
+        "second": "2",
+        "third": "3"
+      }
+    },
+    {
+      "id": "1779484018369",
+      "timestamp": "04:06:58",
+      "duckCount": 10,
+      "winners": {
+        "first": "9",
+        "second": "2",
+        "third": "4"
+      }
+    },
+    {
+      "id": "1779483749430",
+      "timestamp": "04:02:29",
+      "duckCount": 10,
+      "winners": {
+        "first": "6",
+        "second": "4",
+        "third": "3"
+      }
+    }
+  ]
+}

@@ -4,7 +4,7 @@ const socket = io();
 
 // Get DOM Elements
 const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+let ctx = null;
 const countdownOverlay = document.getElementById('countdown-overlay');
 const countdownNumber = document.getElementById('countdown-number');
 const podiumOverlay = document.getElementById('podium-overlay');
@@ -1124,9 +1124,24 @@ function updatePhysics() {
 // 🎨 WebGL 3D / 2D Engine Rendering Integration
 // ----------------------------------------------------
 
+function isWebGLSupported() {
+  try {
+    const canvasTemp = document.createElement('canvas');
+    return !!(window.WebGLRenderingContext && (canvasTemp.getContext('webgl') || canvasTemp.getContext('experimental-webgl')));
+  } catch (e) {
+    return false;
+  }
+}
+
 function tryInit3D() {
   if (typeof THREE === 'undefined') {
     console.warn('Three.js library is not loaded. Falling back to 2D.');
+    is3DActive = false;
+    return;
+  }
+  if (!isWebGLSupported()) {
+    console.warn('WebGL is not supported by the browser or GPU acceleration is disabled. Falling back to 2D.');
+    is3DActive = false;
     return;
   }
   try {
@@ -1695,6 +1710,7 @@ function render3D() {
 }
 
 function render2D() {
+  if (!ctx) ctx = canvas.getContext('2d');
   ctx.fillStyle = '#005588';
   ctx.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
 

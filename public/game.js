@@ -38,6 +38,15 @@ let gameStatus = 'idle'; // idle, counting_down, racing, finished
 let countdownVal = 5;
 let countdownTimer = null;
 let raceDuration = 15; // default seconds
+
+// Three.js 3D WebGL Engine Globals
+let scene, camera, renderer;
+let waterMesh, waterGeometry, waterMaterial;
+let sunLight;
+let treeMeshes = [];
+let duck3DGroups = {};
+let finishPillars = [];
+let is3DActive = false;
 let countdownDuration = 5;
 let riggedWinners = { first: null, second: null, third: null };
 let cameraX = 0;
@@ -173,13 +182,18 @@ if (!roomId || roomId.length !== 4 || isNaN(roomId)) {
 // Identify as Game Screen with Room ID
 socket.emit('identify', { role: 'game', roomId: roomId });
 
-// Update UI badge when window loads
-window.addEventListener('DOMContentLoaded', () => {
+// Update UI badge immediately or on load
+function updateRoomBadge() {
   const roomBadge = document.getElementById('lobby-room-id-badge');
   if (roomBadge) {
     roomBadge.textContent = `ROOM: ${roomId}`;
   }
-});
+}
+if (document.readyState !== 'loading') {
+  updateRoomBadge();
+} else {
+  document.addEventListener('DOMContentLoaded', updateRoomBadge);
+}
 
 
 // ----------------------------------------------------
@@ -1106,13 +1120,581 @@ function updatePhysics() {
 // 🎨 Canvas Drawing Renders
 // ----------------------------------------------------
 
-function updateAndRender() {
-  if (gameStatus === 'racing') {
-    updatePhysics();
-    updateParticles();
+// ----------------------------------------------------
+// 🎨 WebGL 3D / 2D Engine Rendering Integration
+// ----------------------------------------------------
+
+function tryInit3D() {
+  if (typeof THREE === 'undefined') {
+    console.warn('Three.js library is not loaded. Falling back to 2D.');
+    return;
+  }
+  try {
+    init3D();
+    is3DActive = true;
+    console.log('WebGL 3D Engine initialized successfully! 🎮');
+  } catch (err) {
+    console.error('Failed to initialize 3D WebGL context:', err);
+    is3DActive = false;
+  }
+}
+
+function init3D() {
+  // 1. Initialize Renderer
+  renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: false });
+  renderer.setSize(VIEW_WIDTH, VIEW_HEIGHT);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  // 2. Initialize Scene
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color('#87ceeb'); // Beautiful sky blue
+  scene.fog = new THREE.FogExp2('#87ceeb', 0.0004); // Atmospheric fog
+
+  // 3. Initialize Camera
+  camera = new THREE.PerspectiveCamera(40, VIEW_WIDTH / VIEW_HEIGHT, 1, 10000);
+  camera.position.set(0, 320, 480); // x, y, z
+
+  // 4. Initialize Lights
+  const ambientLight = new THREE.AmbientLight('#ffffff', 0.55);
+  scene.add(ambientLight);
+
+  sunLight = new THREE.DirectionalLight('#ffffff', 1.0);
+  sunLight.position.set(500, 1000, 300);
+  sunLight.castShadow = true;
+  sunLight.shadow.mapSize.width = 1024;
+  sunLight.shadow.mapSize.height = 1024;
+  sunLight.shadow.camera.near = 0.5;
+  sunLight.shadow.camera.far = 2500;
+  
+  const d = 500;
+  sunLight.shadow.camera.left = -d;
+  sunLight.shadow.camera.right = d;
+  sunLight.shadow.camera.top = d;
+  sunLight.shadow.camera.bottom = -d;
+  scene.add(sunLight);
+
+  // 5. Add Banks (ground on top and bottom of the river)
+  const bankGeo = new THREE.BoxGeometry(COURSE_LENGTH + 2000, 100, 400);
+  const bankMat = new THREE.MeshStandardMaterial({ color: '#55a630', roughness: 0.8, metalness: 0.1 });
+  
+  const topBank = new THREE.Mesh(bankGeo, bankMat);
+  topBank.position.set(COURSE_LENGTH / 2, -50, -320); // Z = -320
+  topBank.receiveShadow = true;
+  scene.add(topBank);
+
+  const bottomBank = new THREE.Mesh(bankGeo, bankMat);
+  bottomBank.position.set(COURSE_LENGTH / 2, -50, 320); // Z = 320
+  bottomBank.receiveShadow = true;
+  scene.add(bottomBank);
+
+  // 6. Add Sky Dome / Background Plane
+  const skyGeo = new THREE.PlaneGeometry(8000, 4000);
+  const skyMat = new THREE.MeshBasicMaterial({ color: '#7ad1ec', side: THREE.DoubleSide });
+  const skyMesh = new THREE.Mesh(skyGeo, skyMat);
+  skyMesh.position.set(COURSE_LENGTH / 2, 800, -1500);
+  scene.add(skyMesh);
+
+  // Add realistic clouds
+  const cloudMat = new THREE.MeshLambertMaterial({ color: '#ffffff', transparent: true, opacity: 0.85 });
+  for (let i = 0; i < 25; i++) {
+    const cloud = new THREE.Group();
+    const numSpheres = 3 + Math.floor(Math.random() * 4);
+    for (let s = 0; s < numSpheres; s++) {
+      const r = 30 + Math.random() * 40;
+      const sphereGeo = new THREE.SphereGeometry(r, 8, 8);
+      const sphere = new THREE.Mesh(sphereGeo, cloudMat);
+      sphere.position.set(s * 35 - 50, Math.random() * 15 - 7, Math.random() * 15 - 7);
+      cloud.add(sphere);
+    }
+    cloud.position.set(
+      Math.random() * (COURSE_LENGTH + 1500) - 500,
+      400 + Math.random() * 200,
+      -900 - Math.random() * 300
+    );
+    scene.add(cloud);
   }
 
-  // Clear frame
+  // 7. Add Realistic Water Plane with low-poly undulating waves
+  waterGeometry = new THREE.PlaneGeometry(COURSE_LENGTH + 2000, 440, 64, 16);
+  waterGeometry.rotateX(-Math.PI / 2);
+  waterMaterial = new THREE.MeshStandardMaterial({
+    color: '#006d77',
+    roughness: 0.08,
+    metalness: 0.15,
+    transparent: true,
+    opacity: 0.88,
+    flatShading: true
+  });
+  waterMesh = new THREE.Mesh(waterGeometry, waterMaterial);
+  waterMesh.position.set(COURSE_LENGTH / 2, -4, 0);
+  waterMesh.receiveShadow = true;
+  scene.add(waterMesh);
+
+  const posAttr = waterGeometry.attributes.position;
+  waterGeometry.userData = {
+    originalY: []
+  };
+  for (let i = 0; i < posAttr.count; i++) {
+    waterGeometry.userData.originalY.push(posAttr.getY(i));
+  }
+
+  // 8. Add Finish Line Pillars and Checkered Banner
+  const pillarGeo = new THREE.CylinderGeometry(8, 8, 260, 16);
+  const pillarMat = new THREE.MeshStandardMaterial({ color: '#ef4444', roughness: 0.5 });
+  
+  const p1 = new THREE.Mesh(pillarGeo, pillarMat);
+  p1.position.set(COURSE_LENGTH, 130, -210);
+  p1.castShadow = true;
+  scene.add(p1);
+  finishPillars.push(p1);
+
+  const p2 = new THREE.Mesh(pillarGeo, pillarMat);
+  p2.position.set(COURSE_LENGTH, 130, 210);
+  p2.castShadow = true;
+  scene.add(p2);
+  finishPillars.push(p2);
+
+  const bannerGeo = new THREE.BoxGeometry(10, 30, 420);
+  const bannerMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.6 });
+  const bannerMesh = new THREE.Mesh(bannerGeo, bannerMat);
+  bannerMesh.position.set(COURSE_LENGTH, 230, 0);
+  bannerMesh.castShadow = true;
+  scene.add(bannerMesh);
+
+  for (let cz = -200; cz <= 200; cz += 20) {
+    const boxGeo = new THREE.BoxGeometry(11, 31, 10);
+    const boxMat = new THREE.MeshBasicMaterial({ color: (Math.round((cz + 200) / 20) % 2 === 0) ? '#000000' : '#ffffff' });
+    const checkMesh = new THREE.Mesh(boxGeo, boxMat);
+    checkMesh.position.set(COURSE_LENGTH, 230, cz);
+    scene.add(checkMesh);
+  }
+
+  // 9. Plant Forest of 3D Trees
+  plant3DForest();
+}
+
+function plant3DForest() {
+  const treeCount = 60;
+  for (let i = 0; i < treeCount; i++) {
+    const isTop = i % 2 === 0;
+    const x = (i / treeCount) * (COURSE_LENGTH + 1200) - 400;
+    const z = isTop ? (-240 - Math.random() * 120) : (240 + Math.random() * 120);
+    const scale = 0.8 + Math.random() * 0.6;
+
+    const tree = create3DTree(scale);
+    tree.position.set(x, 0, z);
+    scene.add(tree);
+    treeMeshes.push({ mesh: tree, swayOffset: Math.random() * 100, scale: scale });
+  }
+}
+
+function create3DTree(scale) {
+  const treeGroup = new THREE.Group();
+
+  // Trunk
+  const trunkGeo = new THREE.CylinderGeometry(8 * scale, 12 * scale, 70 * scale, 8);
+  const trunkMat = new THREE.MeshStandardMaterial({ color: '#5c4033', roughness: 0.9 });
+  const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+  trunk.position.y = 35 * scale;
+  trunk.castShadow = true;
+  trunk.receiveShadow = true;
+  treeGroup.add(trunk);
+
+  // Foliage
+  const foliageGroup = new THREE.Group();
+  foliageGroup.name = 'foliage';
+  foliageGroup.position.y = 60 * scale;
+
+  const foliageMat = new THREE.MeshStandardMaterial({
+    color: ['#2d6a4f', '#40916c', '#1b4332', '#52b788'][Math.floor(Math.random() * 4)],
+    roughness: 0.85,
+    metalness: 0.1
+  });
+
+  for (let f = 0; f < 3; f++) {
+    const bottomRadius = (28 - f * 6) * scale;
+    const height = (35 - f * 4) * scale;
+    const coneGeo = new THREE.ConeGeometry(bottomRadius, height, 8);
+    const cone = new THREE.Mesh(coneGeo, foliageMat);
+    cone.position.y = (f * 20) * scale;
+    cone.castShadow = true;
+    cone.receiveShadow = true;
+    foliageGroup.add(cone);
+  }
+
+  treeGroup.add(foliageGroup);
+  return treeGroup;
+}
+
+function create3DDuck(duckData) {
+  const duckGroup = new THREE.Group();
+  
+  const styleIdx = duckData.styleIndex !== undefined ? duckData.styleIndex : 0;
+  const style = DUCK_STYLES[styleIdx] || DUCK_STYLES[0];
+  const duckColor = duckData.color || style.color;
+  const beakColor = duckData.beakColor || style.beakColor || '#ff6600';
+  const wingColor = duckData.wingColor || style.wingColor || adjustBrightness(duckColor, -16);
+  const accessory = duckData.accessory || style.accessory || 'none';
+  const accessoryColor = duckData.accessoryColor || '#ffffff';
+
+  // 1. Torso/Body (Volumetric yellow/colored sphere)
+  const torsoGeo = new THREE.SphereGeometry(15, 16, 16);
+  torsoGeo.scale(1.3, 1.0, 1.0);
+  const torsoMat = new THREE.MeshStandardMaterial({ color: duckColor, roughness: 0.25, metalness: 0.1 });
+  const torso = new THREE.Mesh(torsoGeo, torsoMat);
+  torso.position.y = 8;
+  torso.castShadow = true;
+  torso.receiveShadow = true;
+  duckGroup.add(torso);
+
+  // 2. Neck
+  const neckGeo = new THREE.CylinderGeometry(5, 7, 12, 12);
+  const neck = new THREE.Mesh(neckGeo, torsoMat);
+  neck.position.set(10, 14, 0);
+  neck.rotation.z = -Math.PI / 8;
+  neck.castShadow = true;
+  neck.receiveShadow = true;
+  duckGroup.add(neck);
+
+  // 3. Head (Sphere with specular plastic highlight)
+  const headGeo = new THREE.SphereGeometry(9.5, 16, 16);
+  const head = new THREE.Mesh(headGeo, torsoMat);
+  head.position.set(14, 21, 0);
+  head.castShadow = true;
+  head.receiveShadow = true;
+  duckGroup.add(head);
+
+  // 4. Tail
+  const tailGeo = new THREE.ConeGeometry(5, 12, 8);
+  const tail = new THREE.Mesh(tailGeo, torsoMat);
+  tail.position.set(-16, 11, 0);
+  tail.rotation.z = Math.PI / 3;
+  tail.castShadow = true;
+  tail.receiveShadow = true;
+  duckGroup.add(tail);
+
+  // 5. Beak/Bill
+  const beakGeo = new THREE.BoxGeometry(10, 4, 8);
+  const beakMat = new THREE.MeshStandardMaterial({ color: beakColor, roughness: 0.3 });
+  const beak = new THREE.Mesh(beakGeo, beakMat);
+  beak.position.set(22, 20, 0);
+  beak.castShadow = true;
+  duckGroup.add(beak);
+
+  // 6. Eyes
+  const eyeGeo = new THREE.SphereGeometry(1.5, 8, 8);
+  eyeGeo.scale(1, 1, 0.4);
+  const eyeMat = new THREE.MeshBasicMaterial({ color: '#111111' });
+  
+  const eyeL = new THREE.Mesh(eyeGeo, eyeMat);
+  eyeL.position.set(18, 23, 5.5);
+  duckGroup.add(eyeL);
+
+  const eyeR = new THREE.Mesh(eyeGeo, eyeMat);
+  eyeR.position.set(18, 23, -5.5);
+  duckGroup.add(eyeR);
+
+  // Eye highlights
+  const sparkleGeo = new THREE.SphereGeometry(0.5, 8, 8);
+  const sparkleMat = new THREE.MeshBasicMaterial({ color: '#ffffff' });
+  const sparkleL = new THREE.Mesh(sparkleGeo, sparkleMat);
+  sparkleL.position.set(19.2, 23.8, 5.7);
+  duckGroup.add(sparkleL);
+
+  const sparkleR = new THREE.Mesh(sparkleGeo, sparkleMat);
+  sparkleR.position.set(19.2, 23.8, -5.7);
+  duckGroup.add(sparkleR);
+
+  // 7. Wings
+  const wingGeo = new THREE.SphereGeometry(10, 8, 8);
+  wingGeo.scale(1.2, 0.7, 0.25);
+  const wingMat = new THREE.MeshStandardMaterial({ color: wingColor, roughness: 0.3 });
+  
+  const wingL = new THREE.Mesh(wingGeo, wingMat);
+  wingL.position.set(-1, 9, 13);
+  wingL.rotation.set(-Math.PI / 12, 0, Math.PI / 12);
+  wingL.castShadow = true;
+  duckGroup.add(wingL);
+
+  const wingR = new THREE.Mesh(wingGeo, wingMat);
+  wingR.position.set(-1, 9, -13);
+  wingR.rotation.set(Math.PI / 12, 0, -Math.PI / 12);
+  wingR.castShadow = true;
+  duckGroup.add(wingR);
+
+  // 8. Swim Ring
+  const torusGeo = new THREE.TorusGeometry(18, 6, 12, 24);
+  torusGeo.rotateX(Math.PI / 2);
+  
+  const torusMat = new THREE.MeshStandardMaterial({
+    color: duckColor,
+    roughness: 0.15,
+    metalness: 0.15
+  });
+  const torus = new THREE.Mesh(torusGeo, torusMat);
+  torus.position.y = 5;
+  torus.castShadow = true;
+  torus.receiveShadow = true;
+  duckGroup.add(torus);
+
+  // 9. Accessories
+  if (accessory === 'captain_hat') {
+    const hatGroup = new THREE.Group();
+    hatGroup.position.set(14, 30.5, 0);
+
+    const domeGeo = new THREE.CylinderGeometry(7, 7, 5, 12);
+    const domeMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.5 });
+    const dome = new THREE.Mesh(domeGeo, domeMat);
+    dome.position.y = 2.5;
+    dome.castShadow = true;
+    hatGroup.add(dome);
+
+    const brimGeo = new THREE.BoxGeometry(16, 1.5, 12);
+    brimGeo.rotateY(Math.PI / 16);
+    const brimMat = new THREE.MeshStandardMaterial({ color: '#1e3a8a', roughness: 0.3 });
+    const brim = new THREE.Mesh(brimGeo, brimMat);
+    brim.position.set(2, 0, 0);
+    brim.castShadow = true;
+    hatGroup.add(brim);
+
+    duckGroup.add(hatGroup);
+  }
+  else if (accessory === 'glasses' || accessory === 'sunglasses') {
+    const glassesGroup = new THREE.Group();
+    glassesGroup.position.set(19, 23, 0);
+
+    const lensGeo = new THREE.CylinderGeometry(3.5, 3.5, 0.8, 12);
+    lensGeo.rotateX(Math.PI / 2);
+    const lensMat = new THREE.MeshStandardMaterial({
+      color: accessory === 'sunglasses' ? '#111111' : '#a0d2eb',
+      roughness: 0.1,
+      metalness: 0.9,
+      transparent: true,
+      opacity: accessory === 'sunglasses' ? 0.95 : 0.4
+    });
+
+    const lL = new THREE.Mesh(lensGeo, lensMat);
+    lL.position.z = 4.5;
+    glassesGroup.add(lL);
+
+    const lR = new THREE.Mesh(lensGeo, lensMat);
+    lR.position.z = -4.5;
+    glassesGroup.add(lR);
+
+    const frameGeo = new THREE.BoxGeometry(1, 1, 9);
+    const frameMat = new THREE.MeshStandardMaterial({ color: accessoryColor, roughness: 0.2 });
+    const frame = new THREE.Mesh(frameGeo, frameMat);
+    glassesGroup.add(frame);
+
+    duckGroup.add(glassesGroup);
+  }
+  else if (accessory === 'bandana') {
+    const bandanaGeo = new THREE.SphereGeometry(9.8, 12, 12, 0, Math.PI * 2, 0, Math.PI / 2);
+    const bandanaMat = new THREE.MeshStandardMaterial({ color: accessoryColor, roughness: 0.7 });
+    const bandana = new THREE.Mesh(bandanaGeo, bandanaMat);
+    bandana.position.set(14, 21.5, 0);
+    bandana.castShadow = true;
+    duckGroup.add(bandana);
+  }
+  else if (accessory === 'mohawk') {
+    const mohawkGeo = new THREE.BoxGeometry(14, 10, 2);
+    const mohawkMat = new THREE.MeshStandardMaterial({ color: accessoryColor, roughness: 0.6 });
+    const mohawk = new THREE.Mesh(mohawkGeo, mohawkMat);
+    mohawk.position.set(10, 31, 0);
+    mohawk.castShadow = true;
+    duckGroup.add(mohawk);
+  }
+  else if (accessory === 'top_hat') {
+    const hatGroup = new THREE.Group();
+    hatGroup.position.set(14, 30.5, 0);
+
+    const brimGeo = new THREE.CylinderGeometry(11, 11, 1, 12);
+    const brimMat = new THREE.MeshStandardMaterial({ color: '#1e293b', roughness: 0.7 });
+    const brim = new THREE.Mesh(brimGeo, brimMat);
+    brim.castShadow = true;
+    hatGroup.add(brim);
+
+    const cylinderGeo = new THREE.CylinderGeometry(7, 7, 14, 12);
+    const cylinder = new THREE.Mesh(cylinderGeo, brimMat);
+    cylinder.position.y = 7;
+    cylinder.castShadow = true;
+    hatGroup.add(cylinder);
+
+    const ribbonGeo = new THREE.CylinderGeometry(7.2, 7.2, 2.5, 12);
+    const ribbonMat = new THREE.MeshStandardMaterial({ color: accessoryColor, roughness: 0.5 });
+    const ribbon = new THREE.Mesh(ribbonGeo, ribbonMat);
+    ribbon.position.y = 1.5;
+    hatGroup.add(ribbon);
+
+    duckGroup.add(hatGroup);
+  }
+  else if (accessory === 'party_hat') {
+    const coneGeo = new THREE.ConeGeometry(5.5, 18, 12);
+    const coneMat = new THREE.MeshStandardMaterial({ color: accessoryColor, roughness: 0.5 });
+    const cone = new THREE.Mesh(coneGeo, coneMat);
+    cone.position.set(14, 30, 0);
+    cone.castShadow = true;
+    duckGroup.add(cone);
+
+    const pomGeo = new THREE.SphereGeometry(1.8, 8, 8);
+    const pomMat = new THREE.MeshBasicMaterial({ color: '#ffd700' });
+    const pom = new THREE.Mesh(pomGeo, pomMat);
+    pom.position.set(14, 39, 0);
+    duckGroup.add(pom);
+  }
+  else if (accessory === 'headphones') {
+    const hpGroup = new THREE.Group();
+    hpGroup.position.set(14, 21, 0);
+
+    const bandGeo = new THREE.TorusGeometry(11, 1.5, 8, 24, Math.PI);
+    bandGeo.rotateZ(Math.PI / 2);
+    const hpMat = new THREE.MeshStandardMaterial({ color: accessoryColor, roughness: 0.3 });
+    const band = new THREE.Mesh(bandGeo, hpMat);
+    hpGroup.add(band);
+
+    const cupGeo = new THREE.CylinderGeometry(3.5, 3.5, 3, 12);
+    cupGeo.rotateX(Math.PI / 2);
+    const cupL = new THREE.Mesh(cupGeo, hpMat);
+    cupL.position.z = 10.5;
+    hpGroup.add(cupL);
+
+    const cupR = new THREE.Mesh(cupGeo, hpMat);
+    cupR.position.z = -10.5;
+    hpGroup.add(cupR);
+
+    duckGroup.add(hpGroup);
+  }
+
+  duckGroup.userData = {
+    id: duckData.id,
+    name: duckData.name,
+    accessory: accessory,
+    torsoMesh: torso,
+    wingL: wingL,
+    wingR: wingR
+  };
+
+  create3DDuckTag(duckGroup, duckData.name, accessory);
+
+  return duckGroup;
+}
+
+function create3DDuckTag(duckGroup, name, accessory) {
+  if (!name) return;
+
+  const textCanvas = document.createElement('canvas');
+  textCanvas.width = 128;
+  textCanvas.height = 32;
+  const tCtx = textCanvas.getContext('2d');
+  
+  tCtx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+  tCtx.strokeStyle = '#000000';
+  tCtx.lineWidth = 2;
+  
+  tCtx.beginPath();
+  tCtx.roundRect(4, 4, 120, 24, 10);
+  tCtx.fill();
+  tCtx.stroke();
+
+  tCtx.fillStyle = '#000000';
+  tCtx.font = 'bold 16px "Outfit", "Inter", sans-serif';
+  tCtx.textAlign = 'center';
+  tCtx.textBaseline = 'middle';
+  tCtx.fillText(name, 64, 16);
+
+  const texture = new THREE.CanvasTexture(textCanvas);
+  const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true });
+  const sprite = new THREE.Sprite(spriteMat);
+  
+  let tagY = 32;
+  if (accessory === 'party_hat') tagY = 42;
+  else if (accessory === 'top_hat' || accessory === 'mohawk' || accessory === 'captain_hat') tagY = 38;
+  else if (accessory !== 'none') tagY = 35;
+  
+  sprite.position.set(14, tagY, 0);
+  sprite.scale.set(40, 10, 1);
+  sprite.name = 'tag';
+  duckGroup.add(sprite);
+}
+
+function render3D() {
+  const activeIds = new Set(ducks.map(d => d.id));
+  
+  Object.keys(duck3DGroups).forEach(id => {
+    if (!activeIds.has(id)) {
+      scene.remove(duck3DGroups[id]);
+      delete duck3DGroups[id];
+    }
+  });
+
+  ducks.forEach(d => {
+    if (!duck3DGroups[d.id]) {
+      const group = create3DDuck(d);
+      scene.add(group);
+      duck3DGroups[d.id] = group;
+    }
+  });
+
+  ducks.forEach(d => {
+    const group = duck3DGroups[d.id];
+    if (!group) return;
+
+    const targetZ = d.y - 425;
+    
+    group.position.x = d.x;
+    group.position.z = targetZ;
+
+    const bobbingVal = Math.sin(d.bobbingPhase) * 2;
+    group.position.y = bobbingVal;
+    
+    const waddle = Math.sin(Date.now() * 0.015 + d.bobbingPhase) * 0.08;
+    group.rotation.y = waddle;
+    group.rotation.z = waddle * 0.5;
+
+    const wingL = group.userData.wingL;
+    const wingR = group.userData.wingR;
+    if (wingL && wingR) {
+      const flap = Math.sin(Date.now() * 0.025 + d.bobbingPhase) * 0.22;
+      wingL.rotation.z = Math.PI / 12 + flap;
+      wingR.rotation.z = -Math.PI / 12 - flap;
+    }
+  });
+
+  if (waterGeometry) {
+    const posAttr = waterGeometry.attributes.position;
+    const originalY = waterGeometry.userData.originalY;
+    const time = Date.now() * 0.002;
+    for (let i = 0; i < posAttr.count; i++) {
+      const vx = posAttr.getX(i);
+      const vz = posAttr.getZ(i);
+      const wave = Math.sin(vx * 0.006 + time) * 6 + Math.sin(vz * 0.018 + time * 1.3) * 3;
+      posAttr.setY(i, originalY[i] + wave);
+    }
+    posAttr.needsUpdate = true;
+  }
+
+  treeMeshes.forEach(t => {
+    const foliage = t.mesh.getObjectByName('foliage');
+    if (foliage) {
+      foliage.rotation.z = Math.sin(Date.now() * 0.0016 + t.swayOffset) * 0.038 * t.scale;
+      foliage.rotation.x = Math.sin(Date.now() * 0.0012 + t.swayOffset) * 0.026 * t.scale;
+    }
+  });
+
+  camera.position.x += (cameraX - camera.position.x) * 0.06;
+  camera.position.y = 350;
+  camera.position.z = 480;
+  camera.lookAt(new THREE.Vector3(camera.position.x + 120, 0, 0));
+
+  if (sunLight) {
+    sunLight.position.x = camera.position.x + 300;
+  }
+
+  renderer.render(scene, camera);
+}
+
+function render2D() {
   ctx.fillStyle = '#005588';
   ctx.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
 
@@ -1142,9 +1724,28 @@ function updateAndRender() {
   });
 
   ctx.restore();
+}
 
-  if (gameStatus === 'racing' || gameStatus === 'finished') {
+function updateAndRender() {
+  if (gameStatus === 'racing') {
+    updatePhysics();
+    updateParticles();
+  }
+
+  if (is3DActive) {
+    render3D();
+  } else {
+    render2D();
+  }
+
+  if (is3DActive) {
+    if (animationFrameId) cancelAnimationFrame(animationFrameId);
     animationFrameId = requestAnimationFrame(updateAndRender);
+  } else {
+    if (gameStatus === 'racing' || gameStatus === 'finished') {
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      animationFrameId = requestAnimationFrame(updateAndRender);
+    }
   }
 }
 
@@ -1407,18 +2008,7 @@ function drawDuck(ctx, x, y, size, name, color, styleIndex, bobbingOffset, rank,
   }
   ctx.restore();
 
-  // 2. Tail (drawn behind the swim ring body)
-  ctx.fillStyle = duckColor;
-  ctx.beginPath();
-  ctx.moveTo(-18, 2);
-  ctx.quadraticCurveTo(-26, -6, -20, 0);
-  ctx.quadraticCurveTo(-14, 4, -18, 2);
-  ctx.fill();
-  ctx.strokeStyle = '#000';
-  ctx.lineWidth = 2.0;
-  ctx.stroke();
-
-  // 3. Swim Ring Body (outer ellipse with volumetric 3D radial gradient shading)
+  // 2. Swim Ring Body (outer ellipse with volumetric 3D radial gradient shading)
   let ringGrad = ctx.createRadialGradient(-6, 0, 4, 0, 4, 26);
   ringGrad.addColorStop(0, adjustBrightness(duckColor, 35)); // Highlight specular reflection
   ringGrad.addColorStop(0.35, duckColor); // Base color
@@ -1489,7 +2079,7 @@ function drawDuck(ctx, x, y, size, name, color, styleIndex, bobbingOffset, rank,
   ctx.arc(-8, -1, 13, Math.PI * 1.05, Math.PI * 1.55);
   ctx.stroke();
 
-  // 4. Inner Hole of Swim Ring (representing 3D depth)
+  // 3. Inner Hole of Swim Ring (representing 3D depth)
   let holeGrad = ctx.createLinearGradient(0, 0, 0, 8);
   holeGrad.addColorStop(0, '#004488'); // Darkest shadow at top edge of hole
   holeGrad.addColorStop(1, '#0088cc'); // Lighter water highlight
@@ -1502,80 +2092,140 @@ function drawDuck(ctx, x, y, size, name, color, styleIndex, bobbingOffset, rank,
   ctx.lineWidth = 2.0;
   ctx.stroke();
 
-  // 5. Duck Neck & Head (drawn rising from the center of the ring)
-  // Neck with linear 3D gradient
-  let neckGrad = ctx.createLinearGradient(2, -4, 18, -4);
-  neckGrad.addColorStop(0, adjustBrightness(duckColor, 20));
-  neckGrad.addColorStop(1, adjustBrightness(duckColor, -25));
-  ctx.fillStyle = neckGrad;
-  
+  // 4. Chubby Duck Torso/Body (sitting inside the swim ring!)
   ctx.beginPath();
-  ctx.moveTo(2, 4);
-  ctx.lineTo(14, -12);
-  ctx.lineTo(22, -2);
+  ctx.moveTo(-10, -3);
+  ctx.quadraticCurveTo(-18, -10, -22, -6); // upturned tail point
+  ctx.quadraticCurveTo(-23, 0, -12, 5);    // back under-tail curve
+  ctx.quadraticCurveTo(-2, 10, 8, 7);      // belly/bottom
+  ctx.quadraticCurveTo(15, 3, 11, -4);     // chest curve
+  ctx.quadraticCurveTo(3, -6, -10, -3);    // back line
   ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
   
-  // Head with 3D radial gradient sphere shading
-  let headGrad = ctx.createRadialGradient(10, -16, 2, 14, -12, 11);
-  headGrad.addColorStop(0, '#ffffff'); // Specular shiny white light highlight
-  headGrad.addColorStop(0.15, adjustBrightness(duckColor, 35));
-  headGrad.addColorStop(0.55, duckColor); // Base color
-  headGrad.addColorStop(1, adjustBrightness(duckColor, -35)); // Deep sphere shadow
-  
-  ctx.fillStyle = headGrad;
-  ctx.beginPath();
-  ctx.arc(14, -12, 11, 0, Math.PI * 2);
+  let bodyGrad = ctx.createRadialGradient(2, -2, 3, 2, -2, 18);
+  bodyGrad.addColorStop(0, '#ffffff'); // bright light highlight
+  bodyGrad.addColorStop(0.18, adjustBrightness(duckColor, 35));
+  bodyGrad.addColorStop(0.55, duckColor);
+  bodyGrad.addColorStop(1, adjustBrightness(duckColor, -35));
+  ctx.fillStyle = bodyGrad;
   ctx.fill();
   ctx.strokeStyle = '#000';
   ctx.lineWidth = 2.2;
   ctx.stroke();
-  
-  // 6. Eye & Blush
-  ctx.fillStyle = '#000';
-  ctx.beginPath();
-  ctx.arc(17, -15, 2.2, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#fff';
-  ctx.beginPath();
-  ctx.arc(16.2, -15.8, 0.7, 0, Math.PI * 2);
-  ctx.fill();
 
-  // Cute pink cheek blush for a gorgeous premium look!
-  ctx.fillStyle = 'rgba(255, 102, 102, 0.6)';
+  // 5. Duck Neck & Head (drawn rising from the body torso)
   ctx.beginPath();
-  ctx.arc(12, -10, 3, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.moveTo(11, -4);
+  ctx.quadraticCurveTo(13, -10, 16, -12); // front neck
+  ctx.lineTo(8, -12); // head base back
+  ctx.quadraticCurveTo(5, -10, -2, -4); // back neck
+  ctx.closePath();
   
-  // 7. Beak
-  ctx.fillStyle = beakColor;
-  ctx.beginPath();
-  ctx.moveTo(24, -15);
-  ctx.quadraticCurveTo(34, -13, 26, -9);
-  ctx.quadraticCurveTo(22, -9, 24, -15);
+  let neckGrad = ctx.createLinearGradient(5, -12, 10, -4);
+  neckGrad.addColorStop(0, adjustBrightness(duckColor, 20));
+  neckGrad.addColorStop(1, adjustBrightness(duckColor, -25));
+  ctx.fillStyle = neckGrad;
   ctx.fill();
   ctx.strokeStyle = '#000';
   ctx.lineWidth = 2.0;
   ctx.stroke();
-
-  // 8. Wing (on side of the swim ring, drawn on top with 3D volume shading)
-  let wingGrad = ctx.createRadialGradient(-4, 0, 2, -2, 3, 10);
-  wingGrad.addColorStop(0, adjustBrightness(wingColor, 25));
-  wingGrad.addColorStop(0.5, wingColor);
-  wingGrad.addColorStop(1, adjustBrightness(wingColor, -35));
   
-  ctx.fillStyle = wingGrad;
+  // Head with 3D radial gradient sphere shading
+  let headGrad = ctx.createRadialGradient(9, -17, 2, 11, -14, 11.5);
+  headGrad.addColorStop(0, '#ffffff'); // Glossy specular highlight
+  headGrad.addColorStop(0.15, adjustBrightness(duckColor, 38));
+  headGrad.addColorStop(0.55, duckColor); // Base color
+  headGrad.addColorStop(1, adjustBrightness(duckColor, -38)); // Shadow
+  
+  ctx.fillStyle = headGrad;
   ctx.beginPath();
-  ctx.ellipse(-2, 3, 10, 6, Math.PI / 12, 0, Math.PI * 2);
+  ctx.arc(12, -14, 11.5, 0, Math.PI * 2);
   ctx.fill();
   ctx.strokeStyle = '#000';
   ctx.lineWidth = 2.2;
   ctx.stroke();
-
-  // 9. Accessories relative to head center (14, -12)
+  
+  // 6. Eye & Blush (Disney/Anime style for extra premium look!)
   ctx.save();
-  ctx.translate(14, -12);
+  ctx.translate(15.5, -17.5);
+  ctx.fillStyle = '#111111';
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 2.3, 3.8, Math.PI / 16, 0, Math.PI * 2);
+  ctx.fill();
+  
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(-0.8, -1.3, 0.9, 0, Math.PI * 2);
+  ctx.fill();
+  
+  ctx.beginPath();
+  ctx.arc(0.7, 1.3, 0.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Cheek blush
+  ctx.fillStyle = 'rgba(255, 90, 110, 0.55)';
+  ctx.beginPath();
+  ctx.arc(9.5, -11, 2.8, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // 7. Beak (Volumetric bill with upper/lower parts and smile line)
+  ctx.save();
+  ctx.fillStyle = beakColor;
+  ctx.beginPath();
+  ctx.moveTo(21.5, -16.5);
+  ctx.quadraticCurveTo(31, -18.5, 24, -11.5);
+  ctx.quadraticCurveTo(17.5, -10.5, 15.5, -12.5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 2.0;
+  ctx.stroke();
+  
+  ctx.fillStyle = adjustBrightness(beakColor, -20);
+  ctx.beginPath();
+  ctx.moveTo(15.5, -12.5);
+  ctx.quadraticCurveTo(21.5, -10.5, 22, -11.5);
+  ctx.quadraticCurveTo(17.5, -8.5, 15, -11.5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.beginPath();
+  ctx.arc(21, -15.5, 0.6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // 8. Wing (on side of the body, drawn with 3D feathered layers)
+  ctx.save();
+  ctx.translate(-2, 1);
+  ctx.rotate(-Math.PI / 16);
+  
+  let wingGrad = ctx.createRadialGradient(-3, -1, 1, 0, 0, 11);
+  wingGrad.addColorStop(0, '#ffffff'); // gloss highlight
+  wingGrad.addColorStop(0.18, adjustBrightness(wingColor, 25));
+  wingGrad.addColorStop(0.6, wingColor);
+  wingGrad.addColorStop(1, adjustBrightness(wingColor, -30));
+  ctx.fillStyle = wingGrad;
+  
+  ctx.beginPath();
+  ctx.moveTo(-11, -1);
+  ctx.quadraticCurveTo(-14, -3, -12, -6); // top feather tip
+  ctx.quadraticCurveTo(-7, -8, 3, -6);    // wing top shoulder
+  ctx.quadraticCurveTo(9, -1, 5, 5);      // front curve
+  ctx.quadraticCurveTo(-2, 7, -8, 3);     // bottom curve
+  ctx.quadraticCurveTo(-13, 3, -11, -1);  // bottom feather tip
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 2.2;
+  ctx.stroke();
+  ctx.restore();
+
+  // 9. Accessories relative to head center (12, -14)
+  ctx.save();
+  ctx.translate(12, -14);
   
   if (accessory === 'glasses') {
     ctx.strokeStyle = accessoryColor || '#000';
@@ -1731,7 +2381,7 @@ function drawDuck(ctx, x, y, size, name, color, styleIndex, bobbingOffset, rank,
       tagY = -22;
     }
     
-    const rx = 14 - rectWidth / 2;
+    const rx = 12 - rectWidth / 2;
     const ry = tagY - rectHeight / 2;
     
     ctx.fillStyle = '#ffffff';
@@ -2078,6 +2728,9 @@ window.addEventListener('load', () => {
 
   // Initialize bilingual translation UI
   updateLanguageUI();
+
+  // Initialize Three.js 3D Engine
+  tryInit3D();
 
   resizeConsole();
   updateAndRender();

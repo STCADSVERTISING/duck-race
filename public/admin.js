@@ -22,19 +22,80 @@ const inputCountdown = document.getElementById('input-countdown');
 const inputDuration = document.getElementById('input-duration');
 const duckSearch = document.getElementById('duck-search');
 const duckRosterList = document.getElementById('duck-roster-list');
-const adInputLeft = document.getElementById('ad-input-left');
-const adInputRight = document.getElementById('ad-input-right');
 const historyLogList = document.getElementById('history-log-list');
 const toastEl = document.getElementById('toast');
 const soundSuccess = document.getElementById('sound-success');
+
+// Dynamic Banners Manager Elements
+const bannerSlotSelect = document.getElementById('banner-slot-select');
+const bannerShow = document.getElementById('banner-show');
+const bannerContent = document.getElementById('banner-content');
+const bannerLink = document.getElementById('banner-link');
+const bannerBtnText = document.getElementById('banner-btn-text');
+const bannerBtnTextGroup = document.getElementById('banner-btn-text-group');
 
 // Local State Copy
 let localDucks = [];
 let localRigged = { first: null, second: null, third: null };
 let localStatus = 'idle';
+let localBanners = {};
+let activeRoomId = null;
 
-// Identify as Admin Panel
-socket.emit('identify', 'admin');
+// Initialize overlay & listeners when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  const roomInput = document.getElementById('input-room-id');
+  if (roomInput) {
+    // Pre-fill last room ID if exists in storage
+    const cachedRoom = localStorage.getItem('duck_race_admin_roomId');
+    if (cachedRoom && /^\d{4}$/.test(cachedRoom)) {
+      roomInput.value = cachedRoom;
+    }
+    
+    // Auto-focus room ID input
+    roomInput.focus();
+    
+    // Allow pressing Enter key to submit
+    roomInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        connectToRoom();
+      }
+    });
+  }
+});
+
+function connectToRoom() {
+  const roomInput = document.getElementById('input-room-id');
+  const errorEl = document.getElementById('login-error');
+  if (!roomInput) return;
+  const roomId = roomInput.value.trim();
+  
+  if (!/^\d{4}$/.test(roomId)) {
+    if (errorEl) errorEl.classList.remove('hidden');
+    return;
+  }
+  
+  if (errorEl) errorEl.classList.add('hidden');
+  activeRoomId = roomId;
+  
+  // Cache the Room ID
+  localStorage.setItem('duck_race_admin_roomId', roomId);
+  
+  // Identify to server
+  socket.emit('identify', { role: 'admin', roomId: roomId });
+  
+  // Update admin header text to show the connected room
+  const headerLogoSpan = document.querySelector('.header-logo span');
+  if (headerLogoSpan) {
+    headerLogoSpan.textContent = `ADMIN PORTAL - ROOM ${roomId}`;
+  }
+  
+  // Hide overlay
+  const overlay = document.getElementById('login-overlay');
+  if (overlay) overlay.classList.add('hidden');
+  
+  showToast(`🔒 Connected to Room ${roomId}`);
+  playSuccessSound();
+}
 
 // Play confirmation sound
 function playSuccessSound() {
@@ -68,16 +129,14 @@ socket.on('admin_init', (initData) => {
   localDucks = state.ducks || [];
   localRigged = state.riggedWinners || { first: null, second: null, third: null };
   localStatus = state.status || 'idle';
+  localBanners = state.banners || {};
   
   // Sync Settings Inputs
   inputCountdown.value = state.countdownDuration || 5;
   inputDuration.value = state.raceDuration || 15;
   
-  // Sync Ads Editor Inputs
-  if (state.customAds) {
-    adInputLeft.value = state.customAds.left || '';
-    adInputRight.value = state.customAds.right || '';
-  }
+  // Sync Banners Editor UI
+  syncBannerEditorUI();
 
   // Draw UI Components
   updateStatusUI(localStatus);
@@ -178,16 +237,97 @@ function saveSettings() {
   playSuccessSound();
 }
 
-function saveAds() {
-  const left = adInputLeft.value.trim();
-  const right = adInputRight.value.trim();
+// ----------------------------------------------------
+// 📢 DYNAMIC BANNER MANAGER CONTROL FUNCTIONS
+// ----------------------------------------------------
+
+socket.on('sync_banners', (newBanners) => {
+  localBanners = newBanners;
+  syncBannerEditorUI();
+});
+
+function syncBannerEditorUI() {
+  if (!bannerSlotSelect) return;
   
-  socket.emit('admin_update_ads', {
-    left,
-    right
+  const slot = bannerSlotSelect.value;
+  const config = localBanners[slot] || { show: false, type: 'text', content: '', link: '', btnText: '' };
+  
+  // Update visibility checkbox
+  document.getElementById('banner-show').checked = !!config.show;
+  
+  // Update type radio
+  const typeRadios = document.getElementsByName('banner-type');
+  for (let radio of typeRadios) {
+    radio.checked = (radio.value === config.type);
+  }
+  
+  // Update content and link
+  document.getElementById('banner-content').value = config.content || '';
+  document.getElementById('banner-link').value = config.link || '';
+  document.getElementById('banner-btn-text').value = config.btnText || '';
+  
+  // Toggle input visual helper labels
+  updateBannerFormVisibility();
+}
+
+function updateBannerFormVisibility() {
+  if (!bannerSlotSelect) return;
+  const slot = bannerSlotSelect.value;
+  const typeEl = document.querySelector('input[name="banner-type"]:checked');
+  const selectedType = typeEl ? typeEl.value : 'text';
+  
+  // Change label and placeholder of content text area
+  const contentLabel = document.getElementById('banner-content-label');
+  const contentInput = document.getElementById('banner-content');
+  if (contentLabel && contentInput) {
+    if (selectedType === 'image') {
+      contentLabel.textContent = '🖼️ Banner Image URL';
+      contentInput.placeholder = 'Enter image filename or url (e.g. tikflow_banner.png or https://...)';
+    } else {
+      contentLabel.textContent = '📝 Banner Text / HTML Content';
+      contentInput.placeholder = 'Enter scrolling ad text or html code...';
+    }
+  }
+  
+  // Show button text option only for left/right sidebars
+  if (bannerBtnTextGroup) {
+    if (slot === 'left' || slot === 'right') {
+      bannerBtnTextGroup.style.display = 'block';
+    } else {
+      bannerBtnTextGroup.style.display = 'none';
+    }
+  }
+}
+
+function onBannerSlotChange() {
+  syncBannerEditorUI();
+}
+
+function onBannerTypeChange() {
+  updateBannerFormVisibility();
+}
+
+function saveBannerConfig() {
+  if (!bannerSlotSelect) return;
+  const slot = bannerSlotSelect.value;
+  const show = document.getElementById('banner-show').checked;
+  const typeEl = document.querySelector('input[name="banner-type"]:checked');
+  const type = typeEl ? typeEl.value : 'text';
+  const content = document.getElementById('banner-content').value.trim();
+  const link = document.getElementById('banner-link').value.trim();
+  const btnText = document.getElementById('banner-btn-text').value.trim();
+  
+  // Emit banner update event to server
+  socket.emit('admin_update_banners', {
+    slot,
+    show,
+    type,
+    content,
+    link,
+    btnText
   });
   
-  showToast('📢 Advertisements updated!');
+  showToast(`📢 Updated banner config for slot [${slot}]!`);
   playSuccessSound();
 }
 

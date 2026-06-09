@@ -14,6 +14,23 @@
   <link rel="stylesheet" href="admin.css">
 </head>
 <body>
+  <!-- ROOM PASSCODE OVERLAY -->
+  <div id="login-overlay" class="login-overlay">
+    <div class="login-box">
+      <div class="login-logo">
+        <h1>DUCK RACE <span>BACKSTAGE ACCESS</span></h1>
+      </div>
+      <p class="login-instructions">
+        🔑 Enter the 4-digit Room ID displayed on the game screen lobby to connect and control the race.
+      </p>
+      <div class="passcode-input-container">
+        <input type="text" id="input-room-id" maxlength="4" placeholder="0000" pattern="[0-9]{4}" autocomplete="off" inputmode="numeric">
+      </div>
+      <button id="btn-connect-room" class="btn-connect-room" onclick="connectToRoom()">🔓 ACCESS CONSOLE</button>
+      <div id="login-error" class="login-error hidden">Please enter a valid 4-digit numeric Room ID.</div>
+    </div>
+  </div>
+
   <div class="admin-layout">
     
     <!-- DASHBOARD HEADER -->
@@ -113,18 +130,53 @@
       <!-- RIGHT COLUMN: ADS TEXT EDITORS & LOGS -->
       <div class="right-column-stack">
         
-        <!-- CUSTOM ADS EDITORS -->
+        <!-- DYNAMIC BANNER MANAGER SUITE -->
         <section class="dashboard-card ads-card">
-          <h2>📢 Sidebar Ads Content Settings</h2>
+          <h2>📢 Dynamic Ad & Banner Manager</h2>
+          
           <div class="ad-input-group">
-            <label for="ad-input-left">Left Sidebar Ads</label>
-            <textarea id="ad-input-left" rows="2" placeholder="Type scrolling ads text for left side..."></textarea>
+            <label for="banner-slot-select">🎯 Select Banner Slot</label>
+            <select id="banner-slot-select" onchange="onBannerSlotChange()" style="background: var(--bg-input); border: 1px solid var(--border-color); color: #fff; padding: 10px; border-radius: 8px; font-family: inherit; font-size: 0.85rem; outline: none; width: 100%;">
+              <option value="top">Top Banner (Header Line)</option>
+              <option value="left">Left Sidebar Banner</option>
+              <option value="right">Right Sidebar Banner</option>
+              <option value="bottom">Bottom Large Banner</option>
+            </select>
           </div>
+
+          <div class="ad-input-group" style="flex-direction: row; align-items: center; justify-content: space-between; background: var(--bg-dark); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+            <label for="banner-show" style="cursor: pointer; font-weight: 700;">👁️ Show Banner</label>
+            <input type="checkbox" id="banner-show" checked style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary-cyan);">
+          </div>
+
           <div class="ad-input-group">
-            <label for="ad-input-right">Right Sidebar Ads</label>
-            <textarea id="ad-input-right" rows="2" placeholder="Type scrolling ads text for right side..."></textarea>
+            <label>🖼️ Banner Type</label>
+            <div style="display: flex; gap: 20px; background: var(--bg-dark); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; cursor: pointer; color: var(--text-light);">
+                <input type="radio" name="banner-type" value="text" checked onchange="onBannerTypeChange()" style="accent-color: var(--primary-cyan);"> Custom Text/HTML
+              </label>
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; cursor: pointer; color: var(--text-light);">
+                <input type="radio" name="banner-type" value="image" onchange="onBannerTypeChange()" style="accent-color: var(--primary-cyan);"> Image URL
+              </label>
+            </div>
           </div>
-          <button class="save-ads-btn" onclick="saveAds()">📢 Update Ads Instantly</button>
+
+          <div class="ad-input-group">
+            <label id="banner-content-label" for="banner-content">📝 Banner Text/HTML Content</label>
+            <textarea id="banner-content" rows="4" placeholder="Enter banner text, html or image URL..."></textarea>
+          </div>
+
+          <div class="ad-input-group">
+            <label for="banner-link">🔗 Destination Redirect URL</label>
+            <input type="text" id="banner-link" placeholder="https://tikflow24.com" style="background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; color: #fff; font-family: inherit; font-size: 0.8rem; outline: none;">
+          </div>
+
+          <div class="ad-input-group" id="banner-btn-text-group">
+            <label for="banner-btn-text">🔘 Button Label (CTA)</label>
+            <input type="text" id="banner-btn-text" placeholder="LEARN MORE" style="background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; color: #fff; font-family: inherit; font-size: 0.8rem; outline: none;">
+          </div>
+
+          <button class="save-ads-btn" onclick="saveBannerConfig()">📢 Update Slot Banner Instantly</button>
         </section>
 
         <!-- HISTORICAL RACE LOGS -->

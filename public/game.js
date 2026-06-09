@@ -163,8 +163,24 @@ const TRANSLATIONS = {
 let currentPaletteIndex = 0;
 let manualAccessorySet = false; // flag to check if user customized, otherwise we randomize
 
-// Identify as Game Screen
-socket.emit('identify', 'game');
+// Get or generate 4-digit Room ID
+let roomId = localStorage.getItem('duck_race_room_id');
+if (!roomId || roomId.length !== 4 || isNaN(roomId)) {
+  roomId = Math.floor(1000 + Math.random() * 9000).toString();
+  localStorage.setItem('duck_race_room_id', roomId);
+}
+
+// Identify as Game Screen with Room ID
+socket.emit('identify', { role: 'game', roomId: roomId });
+
+// Update UI badge when window loads
+window.addEventListener('DOMContentLoaded', () => {
+  const roomBadge = document.getElementById('lobby-room-id-badge');
+  if (roomBadge) {
+    roomBadge.textContent = `ROOM: ${roomId}`;
+  }
+});
+
 
 // ----------------------------------------------------
 // 🌐 Bilingual Translation System
@@ -1841,6 +1857,107 @@ function handleRaceCompletion() {
   triggerConfetti();
 }
 
+// ----------------------------------------------------
+// 📢 DYNAMIC DUCK GOOGLE ADSENSE ROTATOR (Room-based dynamic sync)
+// ----------------------------------------------------
+
+function renderBanners(banners) {
+  if (!banners) return;
+
+  const slots = {
+    top: document.getElementById('ad-top-slot'),
+    left: document.getElementById('ad-left-slot'),
+    right: document.getElementById('ad-right-slot'),
+    bottom: document.getElementById('ad-bottom-slot')
+  };
+
+  Object.keys(slots).forEach(key => {
+    const el = slots[key];
+    if (!el) return;
+
+    const config = banners[key];
+    if (!config || !config.show) {
+      el.style.display = 'none';
+      return;
+    }
+
+    el.style.display = '';
+    el.style.opacity = '1';
+
+    if (key === 'bottom') {
+      // Special styled container for the bottom banner
+      const inner = el.querySelector('.bottom-ad-banner-inner') || el.querySelector('.ad-banner-inner') || el;
+      if (config.type === 'image') {
+        inner.innerHTML = `
+          <a href="${config.link || '#'}" target="_blank" class="tikflow-banner-link">
+            <div class="tikflow-banner-card" style="background: linear-gradient(rgba(15, 12, 27, 0.75), rgba(12, 8, 23, 0.85)), url('${config.content}') no-repeat center center; background-size: cover;">
+              <span class="ads-badge">โปรโมชั่นพิเศษ</span>
+              <div class="tikflow-content">
+                <div class="tikflow-logo-group">
+                  <span class="tikflow-brand">ADVERTISEMENT</span>
+                </div>
+                <p class="tikflow-headline">${config.content.includes('/') || config.content.includes('.') ? 'คลิกที่แบนเนอร์เพื่อดูโปรโมชั่นพิเศษ' : config.content}</p>
+                <button class="tikflow-btn">ชมเว็บไซต์ 📈</button>
+              </div>
+            </div>
+          </a>
+        `;
+      } else {
+        inner.innerHTML = `
+          <a href="${config.link || '#'}" target="_blank" class="tikflow-banner-link">
+            <div class="tikflow-banner-card" style="background: linear-gradient(135deg, #0c0817 0%, #ff007f 100%);">
+              <span class="ads-badge">ประกาศ</span>
+              <div class="tikflow-content">
+                <div class="tikflow-logo-group">
+                  <span class="tikflow-brand">OFFICIAL</span>
+                </div>
+                <p class="tikflow-headline">${config.content}</p>
+                <button class="tikflow-btn">ดูรายละเอียด 📈</button>
+              </div>
+            </div>
+          </a>
+        `;
+      }
+    } else {
+      // Top, Left, Right banners
+      if (config.type === 'image') {
+        el.innerHTML = `
+          <a href="${config.link || '#'}" target="_blank" style="display:block; width:100%; height:100%; text-decoration:none;">
+            <img src="${config.content}" style="width:100%; height:100%; object-fit:cover; border-radius:4px;" alt="Sponsor Banner">
+          </a>
+        `;
+      } else {
+        // Custom HTML or text banner
+        const isLeftOrRight = key === 'left' || key === 'right';
+        if (isLeftOrRight) {
+          el.innerHTML = `
+            <div class="ad-google-card" style="background: linear-gradient(180deg, #0f0c1b 0%, #201335 100%); color: #fff; height: 100%; display:flex; flex-direction:column; padding:20px 14px; text-align:center; align-items:center;">
+              <span class="ads-label" style="color: rgba(255,255,255,0.5)">SPONSORED</span>
+              <p style="font-size: 0.82rem; line-height:1.5; color: #f1f5f9; margin-top: auto; margin-bottom: auto; white-space: pre-wrap;">${config.content}</p>
+              <a href="${config.link || '#'}" target="_blank" style="width:100%; text-decoration:none; margin-top:auto;">
+                <button style="width: 100%; padding: 10px; background:#ff007f; border:none; font-weight:800; font-size:0.75rem; border-radius:4px; cursor:pointer; color:#fff">${config.btnText || 'LEARN MORE'}</button>
+              </a>
+            </div>
+          `;
+        } else {
+          // Top banner
+          el.innerHTML = `
+            <div class="ad-google-card" style="background: linear-gradient(90deg, #ff007f 0%, #7928ca 100%); color: #fff; display: flex; flex-direction: column; justify-content: center; height:100%; width:100%; padding: 12px 20px;">
+              <span class="ads-label" style="color: rgba(255,255,255,0.6)">ADVERTISEMENT</span>
+              <p style="font-size: 1rem; font-weight:700; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${config.content}</p>
+            </div>
+          `;
+        }
+      }
+    }
+  });
+}
+
+// Receive dynamic updates from Socket.io
+socket.on('sync_banners', (banners) => {
+  renderBanners(banners);
+});
+
 function triggerConfetti() {
   let timer = setInterval(() => {
     if (gameStatus !== 'finished') {
@@ -1893,57 +2010,6 @@ function resetRoster() {
 }
 
 // ----------------------------------------------------
-// 📢 DYNAMIC DUCK GOOGLE ADSENSE ROTATOR (Every 3.5s)
-// ----------------------------------------------------
-
-const ADS_DATABASE = {
-  top: [
-    { title: '⚡ ปั้นเพจออโต้ & ปักตะกร้าติ๊กตอกออโต้ เริ่มต้นเพียง 10 บาท! ⚡', subtitle: 'ระบบอัตโนมัติ 24 ชม. ดันยอดวิว ดันผู้ติดตาม เพิ่มการเข้าถึง มั่นใจได้ 100% ที่ TikFlow24.com', bg: 'linear-gradient(90deg, #ff007f 0%, #7928ca 100%)', text: '#fff' },
-    { title: 'PDF Spaces unlock insights & next steps.', subtitle: 'Start free trial. Adobe Acrobat Studio.', bg: 'linear-gradient(90deg, #ff4e00 0%, #ec9f05 100%)', text: '#fff' },
-    { title: 'Hostinger: Build your website in minutes!', subtitle: 'Get 80% off premium web hosting plan. Use code DUCK.', bg: 'linear-gradient(90deg, #6c33f2 0%, #8c52ff 100%)', text: '#fff' },
-    { title: 'Shopee 6.6 Brands Festival!', subtitle: 'Free Shipping minimum spend 0฿. 50% discount codes live now.', bg: 'linear-gradient(90deg, #ff5722 0%, #ff8a65 100%)', text: '#fff' }
-  ],
-  left: [
-    { title: 'TIKFLOW24.COM 🤖', text: 'หมดปัญหาปั้นช่องแล้วไม่ปัง! ระบบปั้นเพจ TikTok อัตโนมัติ ปักตะกร้าง่าย ๆ เริ่มต้นเพียง 10 บาท ดันยอดผู้ติดตาม & ดันยอดวิวครบวงจรในเว็บเดียว!', bg: 'linear-gradient(180deg, #0f0c1b 0%, #201335 100%)', btnText: 'เริ่มปั้นช่อง' },
-    { title: 'Disneyland Paris', text: 'Pixar Summer Fest is here! Match colors and meet Buzz, Woody & Nemo today!', bg: 'linear-gradient(180deg, #0f2027 0%, #203a43 50%, #2c5364 100%)', btnText: 'BOOK TICKETS' },
-    { title: 'QUACKPOT CASINO 🎰', text: 'Bet on your lucky duck! Join 20,000+ winners daily. Withdrawals in 2 minutes guaranteed.', bg: 'linear-gradient(180deg, #b00020 0%, #1e1e1e 100%)', btnText: 'GET 100$ BONUS' },
-    { title: 'Premium Duck Wheat 🌾', text: 'Make your ducks swim up to 30% faster and have organic yellow coats. 100% natural grain.', bg: 'linear-gradient(180deg, #134e5e 0%, #71b280 100%)', btnText: 'BUY 1 GET 1 FREE' }
-  ],
-  right: [
-    { title: 'ปักตะกร้าติ๊กตอกออโต้ 🛒', text: 'ระบบปักตะกร้า TikTok Auto ดันยอดขายพุ่งแรงแบบไม่ต้องนั่งเฝ้า เริ่มต้นเพียง 10 บาท สมัครใช้งานเพื่อเพิ่มรายได้นายหน้าของคุณวันนี้!', bg: 'linear-gradient(180deg, #0c0817 0%, #ff007f 100%)', btnText: 'เริ่มปักตะกร้า' },
-    { title: 'Adobe Creative Cloud', text: 'Save 30% on 20+ creative applications including Photoshop, Premiere, and Illustrator.', bg: 'linear-gradient(180deg, #00b4db 0%, #0083b0 100%)', btnText: 'START FREE TRIAL' },
-    { title: 'Lazada Mega Sale!', text: 'Add to cart today! Best prices on gadgets, shirts, and electronics with free shipping vouchers.', bg: 'linear-gradient(180deg, #1f4068 0%, #162447 100%)', btnText: 'SHOP NOW' },
-    { title: 'QuackCoin (QCK) Token', text: 'The next big meme token has arrived. Over 15,000% gains this week alone. Buy on PancakeSwap.', bg: 'linear-gradient(180deg, #2b1055 0%, #7597de 100%)', btnText: 'TRADE NOW' }
-  ]
-};
-
-function rotateAdvertisements() {
-  const topSlot = document.getElementById('ad-top-slot');
-  const leftSlot = document.getElementById('ad-left-slot');
-  const rightSlot = document.getElementById('ad-right-slot');
-
-  if (!topSlot || !leftSlot || !rightSlot) return;
-
-  // Add transition class to trigger fade out
-  topSlot.style.opacity = '0.1';
-  leftSlot.style.opacity = '0.1';
-  rightSlot.style.opacity = '0.1';
-
-  setTimeout(() => {
-    // Select random entries
-    const topAd = ADS_DATABASE.top[Math.floor(Math.random() * ADS_DATABASE.top.length)];
-    const leftAd = ADS_DATABASE.left[Math.floor(Math.random() * ADS_DATABASE.left.length)];
-    const rightAd = ADS_DATABASE.right[Math.floor(Math.random() * ADS_DATABASE.right.length)];
-
-    // Populate Top Ad HTML
-    topSlot.innerHTML = `
-      <div class="ad-google-card" style="background: ${topAd.bg}; color: ${topAd.text}">
-        <span class="ads-label" style="color: rgba(255,255,255,0.6)">ADVERTISEMENT</span>
-        <h3 style="font-size: 1.15rem; font-weight:900;">${topAd.title}</h3>
-        <p style="font-size: 0.8rem; font-weight:700; margin-top: 2px; opacity:0.9">${topAd.subtitle}</p>
-      </div>
-    `;
-
     // Populate Left Ad HTML
     leftSlot.innerHTML = `
       <div class="ad-google-card" style="background: ${leftAd.bg}; color: #fff; height: 100%; display:flex; flex-direction:column; padding:20px 14px; text-align:center; align-items:center;">

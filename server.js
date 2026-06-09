@@ -173,6 +173,9 @@ io.on('connection', (socket) => {
       ducks: state.ducks,
       riggedWinners: state.riggedWinners
     });
+    
+    // Also broadcast to game screens!
+    io.to(socketRoomId).emit('game_sync_roster', state.ducks);
   });
 
   // 2. Race Status Update from game client

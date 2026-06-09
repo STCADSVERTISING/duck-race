@@ -179,8 +179,11 @@ if (!roomId || roomId.length !== 4 || isNaN(roomId)) {
   localStorage.setItem('duck_race_room_id', roomId);
 }
 
-// Identify as Game Screen with Room ID
-socket.emit('identify', { role: 'game', roomId: roomId });
+// Identify as Game Screen with Room ID on connect
+socket.on('connect', () => {
+  socket.emit('identify', { role: 'game', roomId: roomId });
+  console.log(`Socket connected! Identified room: ${roomId}`);
+});
 
 // Update UI badge immediately or on load
 function updateRoomBadge() {
@@ -758,7 +761,7 @@ socket.on('game_start_race', () => {
       if (btnStart) btnStart.classList.add('hidden');
     }
     
-    // Position ducks behind diagonal line
+    // Position ducks equally
     const startWaterY = 305;
     const endWaterY = 545;
     const usableHeight = endWaterY - startWaterY;
@@ -766,7 +769,7 @@ socket.on('game_start_race', () => {
     ducks.forEach((d, idx) => {
       d.baseY = startWaterY + (idx * laneHeight) + (laneHeight / 2);
       d.y = d.baseY;
-      d.x = (250 - (d.y - 285) * 6 / 13) - 35;
+      d.x = 100;
     });
 
     // Start racing immediately with no countdown!
@@ -822,7 +825,7 @@ function goToReadyState() {
     timerScreen.textContent = formatSecondsToStopwatch(raceDuration);
   }
   
-  // Position lanes dynamically behind diagonal checkered line
+  // Position lanes dynamically behind checkered line
   const startWaterY = 305;
   const endWaterY = 545;
   const usableHeight = endWaterY - startWaterY;
@@ -831,7 +834,7 @@ function goToReadyState() {
   ducks.forEach((d, idx) => {
     d.baseY = startWaterY + (idx * laneHeight) + (laneHeight / 2);
     d.y = d.baseY;
-    d.x = (250 - (d.y - 285) * 6 / 13) - 35;
+    d.x = 100;
     d.speed = 0;
     d.rank = null;
     d.finishTime = null;
@@ -1292,9 +1295,9 @@ function init3D() {
 function plant3DForest() {
   const treeCount = 60;
   for (let i = 0; i < treeCount; i++) {
-    const isTop = i % 2 === 0;
     const x = (i / treeCount) * (COURSE_LENGTH + 1200) - 400;
-    const z = isTop ? (-240 - Math.random() * 120) : (240 + Math.random() * 120);
+    // Plant all trees on the top bank (background) for unobstructed side view
+    const z = -240 - Math.random() * 120;
     const scale = 0.8 + Math.random() * 0.6;
 
     const tree = create3DTree(scale);
@@ -1352,6 +1355,7 @@ function create3DDuck(duckData) {
   const wingColor = duckData.wingColor || style.wingColor || adjustBrightness(duckColor, -16);
   const accessory = duckData.accessory || style.accessory || 'none';
   const accessoryColor = duckData.accessoryColor || '#ffffff';
+  const patternColor = duckData.patternColor || '#00e5ff';
 
   // 1. Torso/Body (Volumetric yellow/colored sphere)
   const torsoGeo = new THREE.SphereGeometry(15, 16, 16);
@@ -1389,8 +1393,10 @@ function create3DDuck(duckData) {
   tail.receiveShadow = true;
   duckGroup.add(tail);
 
-  // 5. Beak/Bill
-  const beakGeo = new THREE.BoxGeometry(10, 4, 8);
+  // 5. Beak/Bill (Cute organic rounded duck bill)
+  const beakGeo = new THREE.ConeGeometry(4, 9, 12);
+  beakGeo.rotateZ(-Math.PI / 2); // Point forward
+  beakGeo.scale(1.0, 0.6, 1.3); // Flatten to look like a bill!
   const beakMat = new THREE.MeshStandardMaterial({ color: beakColor, roughness: 0.3 });
   const beak = new THREE.Mesh(beakGeo, beakMat);
   beak.position.set(22, 20, 0);
@@ -1438,12 +1444,12 @@ function create3DDuck(duckData) {
   wingR.castShadow = true;
   duckGroup.add(wingR);
 
-  // 8. Swim Ring
+  // 8. Swim Ring (Contrasting pattern color for high visibility)
   const torusGeo = new THREE.TorusGeometry(18, 6, 12, 24);
   torusGeo.rotateX(Math.PI / 2);
   
   const torusMat = new THREE.MeshStandardMaterial({
-    color: duckColor,
+    color: patternColor,
     roughness: 0.15,
     metalness: 0.15
   });
@@ -1697,10 +1703,16 @@ function render3D() {
     }
   });
 
+  const numDucks = ducks.length;
+  // Calculate dynamic scale factor based on number of ducks (supporting 2 to 30)
+  const tScale = Math.max(0, Math.min(1, (numDucks - 2) / 28)); // 0 for 2 ducks, 1 for 30 ducks
+  const targetCamY = 120 + tScale * 180;
+  const targetCamZ = 220 + tScale * 260;
+
   camera.position.x += (cameraX - camera.position.x) * 0.06;
-  camera.position.y = 350;
-  camera.position.z = 480;
-  camera.lookAt(new THREE.Vector3(camera.position.x + 120, 0, 0));
+  camera.position.y += (targetCamY - camera.position.y) * 0.06;
+  camera.position.z += (targetCamZ - camera.position.z) * 0.06;
+  camera.lookAt(new THREE.Vector3(camera.position.x + 60, -20, 0));
 
   if (sunLight) {
     sunLight.position.x = camera.position.x + 300;
@@ -1843,15 +1855,15 @@ function drawBackgroundParallax() {
   ctx.fillStyle = '#00a8ff'; // vibrant water blue
   ctx.fillRect(cameraX, 285, VIEW_WIDTH, VIEW_HEIGHT - 285);
   
-  // 9. Diagonal Checkered starting line from (250, 285) to (130, 545)
+  // 9. Straight Checkered starting line at X = 80
   const N = 26; // number of checkered segments
   const segHeight = 260 / N;
   const lineW = 10; // width of each checkered block
   for (let i = 0; i < N; i++) {
     const y1 = 285 + i * segHeight;
     const y2 = y1 + segHeight;
-    const x1 = 250 - (y1 - 285) * 6 / 13;
-    const x2 = 250 - (y2 - 285) * 6 / 13;
+    const x1 = 80;
+    const x2 = 80;
     
     // Segment 1 (left half of checkered line)
     ctx.fillStyle = (i % 2 === 0) ? '#ffffff' : '#000000';
@@ -1880,8 +1892,8 @@ function drawBackgroundParallax() {
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
   ducks.forEach((d, idx) => {
-    const startX = 250 - (d.baseY - 285) * 6 / 13;
-    ctx.fillText(`${idx + 1}`, startX + 35, d.baseY + 5);
+    const startX = 80;
+    ctx.fillText(`${idx + 1}`, startX - 35, d.baseY + 5);
   });
 }
 
@@ -2665,7 +2677,7 @@ function resetRoster() {
   lobbyPanel.style.display = 'flex';
   
   ducks.forEach(d => {
-    d.x = 20;
+    d.x = 100;
     d.speed = 0;
     d.rank = null;
     d.finishTime = null;

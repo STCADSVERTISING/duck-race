@@ -14,6 +14,14 @@ const DUCK_STYLES = [
 
 const socket = io();
 
+// Automatically re-identify on reconnect to keep room connection alive
+socket.on('connect', () => {
+  if (activeRoomId) {
+    socket.emit('identify', { role: 'admin', roomId: activeRoomId });
+    console.log(`Socket re-connected! Identified admin room: ${activeRoomId}`);
+  }
+});
+
 // Get UI DOM Elements
 const txtAdmins = document.getElementById('txt-admins');
 const txtGames = document.getElementById('txt-games');

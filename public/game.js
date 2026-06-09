@@ -2660,34 +2660,6 @@ function resetRoster() {
 }
 
 // ----------------------------------------------------
-    // Populate Left Ad HTML
-    leftSlot.innerHTML = `
-      <div class="ad-google-card" style="background: ${leftAd.bg}; color: #fff; height: 100%; display:flex; flex-direction:column; padding:20px 14px; text-align:center; align-items:center;">
-        <span class="ads-label" style="color: rgba(255,255,255,0.5)">SPONSORED</span>
-        <h3 style="font-size: 1rem; font-weight:900; margin-top: 15px; margin-bottom: 20px;">${leftAd.title}</h3>
-        <p style="font-size: 0.75rem; line-height:1.5; color: #e5e7eb; margin-bottom: auto;">${leftAd.text}</p>
-        <button style="width: 100%; padding: 10px; background:#ffd166; border:none; font-weight:800; font-size:0.75rem; border-radius:4px; margin-top: 20px; cursor:pointer; color:#000">${leftAd.btnText}</button>
-      </div>
-    `;
-
-    // Populate Right Ad HTML
-    rightSlot.innerHTML = `
-      <div class="ad-google-card" style="background: ${rightAd.bg}; color: #fff; height: 100%; display:flex; flex-direction:column; padding:20px 14px; text-align:center; align-items:center;">
-        <span class="ads-label" style="color: rgba(255,255,255,0.5)">ADVERTISEMENT</span>
-        <h3 style="font-size: 1rem; font-weight:900; margin-top: 15px; margin-bottom: 20px;">${rightAd.title}</h3>
-        <p style="font-size: 0.75rem; line-height:1.5; color: #e5e7eb; margin-bottom: auto;">${rightAd.text}</p>
-        <button style="width: 100%; padding: 10px; background:#4caf50; border:none; font-weight:800; font-size:0.75rem; border-radius:4px; margin-top: 20px; cursor:pointer; color:#fff">${rightAd.btnText}</button>
-      </div>
-    `;
-
-    // Fade in back smoothly
-    topSlot.style.opacity = '1';
-    leftSlot.style.opacity = '1';
-    rightSlot.style.opacity = '1';
-  }, 350);
-}
-
-// ----------------------------------------------------
 // 📱 Dynamic Canvas & Console UI Scaler
 // ----------------------------------------------------
 
@@ -2702,10 +2674,6 @@ function resizeConsole() {
   scaler.style.left = `${canvasEl.offsetLeft}px`;
   scaler.style.top = `${canvasEl.offsetTop}px`;
 }
-
-// Start Ad rotator loop
-rotateAdvertisements();
-setInterval(rotateAdvertisements, 4500);
 
 function formatSecondsToKeypadString(seconds) {
   let hh = Math.floor(seconds / 3600);

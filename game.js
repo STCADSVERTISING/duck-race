@@ -1243,17 +1243,17 @@ function init3D() {
   sunLight.shadow.camera.bottom = -d;
   scene.add(sunLight);
 
-  // 5. Add Banks (ground on top and bottom of the river, moved further apart for a wider river)
-  const bankGeo = new THREE.BoxGeometry(COURSE_LENGTH + 2000, 100, 800);
+  // 5. Add Banks (ground on top and bottom of the river - WIDER river)
+  const bankGeo = new THREE.BoxGeometry(COURSE_LENGTH + 2000, 100, 600);
   const bankMat = new THREE.MeshStandardMaterial({ color: '#55a630', roughness: 0.8, metalness: 0.1 });
   
   const topBank = new THREE.Mesh(bankGeo, bankMat);
-  topBank.position.set(COURSE_LENGTH / 2, -50, -620); // Z = -620
+  topBank.position.set(COURSE_LENGTH / 2, -50, -650); // Moved further out
   topBank.receiveShadow = true;
   scene.add(topBank);
 
   const bottomBank = new THREE.Mesh(bankGeo, bankMat);
-  bottomBank.position.set(COURSE_LENGTH / 2, -50, 620); // Z = 620
+  bottomBank.position.set(COURSE_LENGTH / 2, -50, 650); // Moved further out
   bottomBank.receiveShadow = true;
   scene.add(bottomBank);
 
@@ -1284,8 +1284,8 @@ function init3D() {
     scene.add(cloud);
   }
 
-  // 7. Add Realistic Water Plane with low-poly undulating waves
-  waterGeometry = new THREE.PlaneGeometry(COURSE_LENGTH + 2000, 640, 64, 16);
+  // 7. Add Realistic Water Plane with low-poly undulating waves - WIDER river
+  waterGeometry = new THREE.PlaneGeometry(COURSE_LENGTH + 2000, 900, 64, 16);
   waterGeometry.rotateX(-Math.PI / 2);
   waterMaterial = new THREE.MeshStandardMaterial({
     color: '#0077be',
@@ -1308,36 +1308,45 @@ function init3D() {
     waterGeometry.userData.originalY.push(posAttr.getY(i));
   }
 
-  // 8. Add Finish Line Pillars and Checkered Banner
-  const pillarGeo = new THREE.CylinderGeometry(8, 8, 260, 16);
-  const pillarMat = new THREE.MeshStandardMaterial({ color: '#ef4444', roughness: 0.5 });
+  // 8. Add Finish Line Pillars and Checkered Banner - BIGGER and more visible
+  const pillarGeo = new THREE.CylinderGeometry(12, 12, 350, 16);
+  const pillarMat = new THREE.MeshStandardMaterial({ color: '#ef4444', roughness: 0.4 });
   
   const p1 = new THREE.Mesh(pillarGeo, pillarMat);
-  p1.position.set(COURSE_LENGTH, 130, -310);
+  p1.position.set(COURSE_LENGTH, 175, -400);
   p1.castShadow = true;
   scene.add(p1);
   finishPillars.push(p1);
 
   const p2 = new THREE.Mesh(pillarGeo, pillarMat);
-  p2.position.set(COURSE_LENGTH, 130, 310);
+  p2.position.set(COURSE_LENGTH, 175, 400);
   p2.castShadow = true;
   scene.add(p2);
   finishPillars.push(p2);
 
-  const bannerGeo = new THREE.BoxGeometry(10, 30, 620);
+  // Checkered banner across the finish line
+  const bannerGeo = new THREE.BoxGeometry(15, 40, 800);
   const bannerMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.6 });
   const bannerMesh = new THREE.Mesh(bannerGeo, bannerMat);
-  bannerMesh.position.set(COURSE_LENGTH, 230, 0);
+  bannerMesh.position.set(COURSE_LENGTH, 300, 0);
   bannerMesh.castShadow = true;
   scene.add(bannerMesh);
 
-  for (let cz = -300; cz <= 300; cz += 20) {
-    const boxGeo = new THREE.BoxGeometry(11, 31, 10);
-    const boxMat = new THREE.MeshBasicMaterial({ color: (Math.round((cz + 300) / 20) % 2 === 0) ? '#000000' : '#ffffff' });
+  // Checkered pattern
+  for (let cz = -390; cz <= 390; cz += 25) {
+    const boxGeo = new THREE.BoxGeometry(16, 41, 12);
+    const boxMat = new THREE.MeshBasicMaterial({ color: (Math.round((cz + 390) / 25) % 2 === 0) ? '#000000' : '#ffffff' });
     const checkMesh = new THREE.Mesh(boxGeo, boxMat);
-    checkMesh.position.set(COURSE_LENGTH, 230, cz);
+    checkMesh.position.set(COURSE_LENGTH, 300, cz);
     scene.add(checkMesh);
   }
+  
+  // Add "FINISH" text sign
+  const signGeo = new THREE.BoxGeometry(100, 50, 5);
+  const signMat = new THREE.MeshBasicMaterial({ color: '#ff3300' });
+  const signMesh = new THREE.Mesh(signGeo, signMat);
+  signMesh.position.set(COURSE_LENGTH, 380, 0);
+  scene.add(signMesh);
 
   // 9. Plant Forest of 3D Trees
   plant3DForest();
@@ -2070,27 +2079,37 @@ function drawBackgroundParallax() {
 
 function drawFinishLine() {
   const lineX = COURSE_LENGTH;
-  const stripeWidth = 15;
+  const stripeWidth = 20;
 
   ctx.save();
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(lineX, 285, 40, VIEW_HEIGHT - 285);
+  
+  // Main finish line - white background
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(lineX, 280, 50, VIEW_HEIGHT - 280);
 
-  ctx.fillStyle = '#000';
-  for (let y = 285; y < VIEW_HEIGHT; y += stripeWidth * 2) {
+  // Checkered pattern
+  ctx.fillStyle = '#000000';
+  for (let y = 280; y < VIEW_HEIGHT; y += stripeWidth * 2) {
     ctx.fillRect(lineX, y, stripeWidth, stripeWidth);
     ctx.fillRect(lineX + stripeWidth, y + stripeWidth, stripeWidth, stripeWidth);
   }
 
+  // Finish line pole
   ctx.fillStyle = '#e5e7eb';
-  ctx.fillRect(lineX + 15, 60, 10, VIEW_HEIGHT - 60);
+  ctx.fillRect(lineX + 20, 40, 12, VIEW_HEIGHT - 40);
 
+  // FINISH sign - bigger and more visible
   ctx.fillStyle = '#ff3300';
-  ctx.font = 'bold 16px "Outfit", sans-serif';
+  ctx.fillRect(lineX - 50, 30, 150, 45);
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(lineX - 50, 30, 150, 45);
+  
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 24px "Outfit", sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillRect(lineX - 40, 60, 120, 32);
-  ctx.fillStyle = '#fff';
-  ctx.fillText('FINISH', lineX + 20, 82);
+  ctx.fillText('🏁 FINISH', lineX + 25, 60);
+  
   ctx.restore();
 }
 

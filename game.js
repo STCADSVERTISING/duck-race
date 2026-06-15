@@ -1110,10 +1110,10 @@ function updatePhysics() {
     
     let dx = targetX - d.x;
     
-    // Dynamic pursuit factor: gentle, slow, and continuous easing during the race, and fast snapping once crossed to ensure 100% precision
-    let easeFactor = 0.055; // Highly elegant, slow, and continuous waddle waddle!
+    // Faster pursuit factor - ducks follow their target more closely
+    let easeFactor = 0.12; // Faster, more responsive movement
     if (duckProgress >= 1.0) {
-      easeFactor = 0.25; // Snaps quickly and precisely past the finish line!
+      easeFactor = 0.35; // Snaps quickly and precisely past the finish line!
     }
     
     d.x += dx * easeFactor;
@@ -1138,16 +1138,30 @@ function updatePhysics() {
     }
   });
 
-  // Camera tracking: focus on the leading duck that hasn't finished yet
+  // Camera tracking: keep leading duck centered on screen
   let activeMaxX = 0;
+  let activeMinX = Infinity;
+  let activeDuckCount = 0;
+  
   ducks.forEach(d => {
-    if (d.rank === null && d.x > activeMaxX) activeMaxX = d.x;
+    if (d.rank === null) {
+      if (d.x > activeMaxX) activeMaxX = d.x;
+      if (d.x < activeMinX) activeMinX = d.x;
+      activeDuckCount++;
+    }
   });
   
   if (activeMaxX === 0) activeMaxX = COURSE_LENGTH;
   
-  const targetCamX = Math.max(0, Math.min(COURSE_LENGTH - VIEW_WIDTH + 120, activeMaxX - VIEW_WIDTH * 0.45));
-  cameraX += (targetCamX - cameraX) * 0.06;
+  // Calculate center of all active ducks
+  const duckCenterX = (activeMaxX + (activeMinX < Infinity ? activeMinX : activeMaxX)) / 2;
+  
+  // Camera follows the center of active ducks, keeping them in the middle of screen
+  const targetCamX = Math.max(0, Math.min(COURSE_LENGTH - VIEW_WIDTH + 200, duckCenterX - VIEW_WIDTH * 0.5));
+  
+  // Smooth but responsive camera follow
+  const cameraSpeed = activeDuckCount > 0 ? 0.15 : 0.1;
+  cameraX += (targetCamX - cameraX) * cameraSpeed;
 }
 
 // ----------------------------------------------------
@@ -1825,13 +1839,24 @@ function render3D() {
   });
 
   let activeMaxX = 0;
+  let activeMinX = Infinity;
+  let activeDuckCount3D = 0;
+  
   ducks.forEach(d => {
-    if (d.rank === null && d.x > activeMaxX) activeMaxX = d.x;
+    if (d.rank === null) {
+      if (d.x > activeMaxX) activeMaxX = d.x;
+      if (d.x < activeMinX) activeMinX = d.x;
+      activeDuckCount3D++;
+    }
   });
+  
   if (activeMaxX === 0) activeMaxX = COURSE_LENGTH;
   
-  // Follow the ducks up to the finish line and slightly beyond
-  const targetCamX3D = Math.max(0, Math.min(COURSE_LENGTH + 200, activeMaxX - 80));
+  // Calculate center of all active ducks for 3D camera
+  const duckCenterX3D = (activeMaxX + (activeMinX < Infinity ? activeMinX : activeMaxX)) / 2;
+  
+  // Follow the ducks up to the finish line, keeping them centered
+  const targetCamX3D = Math.max(0, Math.min(COURSE_LENGTH + 200, duckCenterX3D - 100));
 
   const numDucks = ducks.length;
   // Calculate dynamic scale factor based on number of ducks (supporting 2 to 30)
@@ -1839,10 +1864,12 @@ function render3D() {
   const targetCamY = 120 + tScale * 180;
   const targetCamZ = 240 + tScale * 300;
 
-  camera.position.x += (targetCamX3D - camera.position.x) * 0.06;
-  camera.position.y += (targetCamY - camera.position.y) * 0.06;
-  camera.position.z += (targetCamZ - camera.position.z) * 0.06;
-  camera.lookAt(new THREE.Vector3(camera.position.x + 80, -20, 0));
+  // Faster camera follow in 3D
+  const camera3DSpeed = activeDuckCount3D > 0 ? 0.15 : 0.1;
+  camera.position.x += (targetCamX3D - camera.position.x) * camera3DSpeed;
+  camera.position.y += (targetCamY - camera.position.y) * camera3DSpeed;
+  camera.position.z += (targetCamZ - camera.position.z) * camera3DSpeed;
+  camera.lookAt(new THREE.Vector3(camera.position.x + 100, -20, 0));
 
   if (sunLight) {
     sunLight.position.x = camera.position.x + 300;

@@ -1110,10 +1110,10 @@ function updatePhysics() {
     
     let dx = targetX - d.x;
     
-    // Faster pursuit factor - ducks follow their target more closely
-    let easeFactor = 0.12; // Faster, more responsive movement
+    // Balanced pursuit factor - smooth and realistic movement
+    let easeFactor = 0.08; // Smooth, continuous movement
     if (duckProgress >= 1.0) {
-      easeFactor = 0.35; // Snaps quickly and precisely past the finish line!
+      easeFactor = 0.2; // Snaps to finish position
     }
     
     d.x += dx * easeFactor;
@@ -1138,7 +1138,7 @@ function updatePhysics() {
     }
   });
 
-  // Camera tracking: keep leading duck centered on screen
+  // Camera tracking: keep all active ducks visible on screen
   let activeMaxX = 0;
   let activeMinX = Infinity;
   let activeDuckCount = 0;
@@ -1153,14 +1153,19 @@ function updatePhysics() {
   
   if (activeMaxX === 0) activeMaxX = COURSE_LENGTH;
   
-  // Calculate center of all active ducks
-  const duckCenterX = (activeMaxX + (activeMinX < Infinity ? activeMinX : activeMaxX)) / 2;
+  // Calculate the spread of ducks
+  const duckSpread = activeMaxX - (activeMinX < Infinity ? activeMinX : activeMaxX);
   
-  // Camera follows the center of active ducks, keeping them in the middle of screen
-  const targetCamX = Math.max(0, Math.min(COURSE_LENGTH - VIEW_WIDTH + 200, duckCenterX - VIEW_WIDTH * 0.5));
+  // Camera target: center the leading duck with some padding
+  // If ducks are spread out, show more of the course
+  const padding = Math.min(200, duckSpread * 0.3);
+  const targetCamX = Math.max(0, Math.min(
+    COURSE_LENGTH - VIEW_WIDTH + 100, 
+    activeMaxX - VIEW_WIDTH * 0.6 - padding
+  ));
   
-  // Smooth but responsive camera follow
-  const cameraSpeed = activeDuckCount > 0 ? 0.15 : 0.1;
+  // Smooth camera follow - fast enough to keep up, slow enough to be cinematic
+  const cameraSpeed = activeDuckCount > 0 ? 0.1 : 0.08;
   cameraX += (targetCamX - cameraX) * cameraSpeed;
 }
 
@@ -1212,11 +1217,11 @@ function init3D() {
   // 2. Initialize Scene
   scene = new THREE.Scene();
   scene.background = new THREE.Color('#87ceeb'); // Beautiful sky blue
-  scene.fog = new THREE.FogExp2('#87ceeb', 0.0004); // Atmospheric fog
+  scene.fog = new THREE.FogExp2('#87ceeb', 0.0003); // Atmospheric fog
 
-  // 3. Initialize Camera
-  camera = new THREE.PerspectiveCamera(40, VIEW_WIDTH / VIEW_HEIGHT, 1, 10000);
-  camera.position.set(0, 320, 480); // x, y, z
+  // 3. Initialize Camera - wider FOV for better visibility
+  camera = new THREE.PerspectiveCamera(50, VIEW_WIDTH / VIEW_HEIGHT, 1, 10000);
+  camera.position.set(0, 350, 600); // x, y, z - zoomed out more
 
   // 4. Initialize Lights
   const ambientLight = new THREE.AmbientLight('#ffffff', 0.55);
@@ -1855,21 +1860,24 @@ function render3D() {
   // Calculate center of all active ducks for 3D camera
   const duckCenterX3D = (activeMaxX + (activeMinX < Infinity ? activeMinX : activeMaxX)) / 2;
   
-  // Follow the ducks up to the finish line, keeping them centered
-  const targetCamX3D = Math.max(0, Math.min(COURSE_LENGTH + 200, duckCenterX3D - 100));
+  // Follow the ducks up to the finish line, keeping them centered with good spacing
+  const targetCamX3D = Math.max(0, Math.min(COURSE_LENGTH + 100, duckCenterX3D - 150));
 
   const numDucks = ducks.length;
-  // Calculate dynamic scale factor based on number of ducks (supporting 2 to 30)
-  const tScale = Math.max(0, Math.min(1, (numDucks - 2) / 28)); // 0 for 2 ducks, 1 for 30 ducks
-  const targetCamY = 120 + tScale * 180;
-  const targetCamZ = 240 + tScale * 300;
+  // Dynamic camera height and distance based on number of ducks
+  const tScale = Math.max(0, Math.min(1, (numDucks - 2) / 28));
+  const targetCamY = 280 + tScale * 120;  // Higher camera for better overview
+  const targetCamZ = 500 + tScale * 200;  // Further back for wider view
 
-  // Faster camera follow in 3D
-  const camera3DSpeed = activeDuckCount3D > 0 ? 0.15 : 0.1;
+  // Smooth camera follow
+  const camera3DSpeed = activeDuckCount3D > 0 ? 0.08 : 0.06;
   camera.position.x += (targetCamX3D - camera.position.x) * camera3DSpeed;
   camera.position.y += (targetCamY - camera.position.y) * camera3DSpeed;
   camera.position.z += (targetCamZ - camera.position.z) * camera3DSpeed;
-  camera.lookAt(new THREE.Vector3(camera.position.x + 100, -20, 0));
+  
+  // Look ahead of the ducks, not directly at them
+  const lookAheadX = Math.min(activeMaxX + 200, COURSE_LENGTH + 100);
+  camera.lookAt(new THREE.Vector3(lookAheadX, 0, 0));
 
   if (sunLight) {
     sunLight.position.x = camera.position.x + 300;

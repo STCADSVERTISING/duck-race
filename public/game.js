@@ -31,6 +31,12 @@ const soundQuack = document.getElementById('sound-quack');
 const COURSE_LENGTH = 2800; // Finish line X position
 const VIEW_WIDTH = 1024;
 const VIEW_HEIGHT = 576;
+const RIVER_TOP = 235;
+const RIVER_BOTTOM = VIEW_HEIGHT;
+const RIVER_PADDING = 30;
+const START_LINE_X = 90;
+const RIVER_3D_HALF_WIDTH = 310;
+const CAMERA_FOLLOW_SPEED = 0.28;
 
 // Local State
 let ducks = [];
@@ -757,23 +763,15 @@ socket.on('game_start_race', () => {
       readyOverlay.classList.remove('hidden');
       const btnShuffle = readyOverlay.querySelector('.btn-shuffle');
       const btnStart = readyOverlay.querySelector('.btn-start');
+      const btnClear = readyOverlay.querySelector('.btn-clear-race');
       if (btnShuffle) btnShuffle.classList.add('hidden');
       if (btnStart) btnStart.classList.add('hidden');
+      if (btnClear) btnClear.classList.add('hidden');
     }
-    
-    // Position ducks equally
-    const startWaterY = 305;
-    const endWaterY = 545;
-    const usableHeight = endWaterY - startWaterY;
-    const laneHeight = usableHeight / ducks.length;
-    ducks.forEach((d, idx) => {
-      d.baseY = startWaterY + (idx * laneHeight) + (laneHeight / 2);
-      d.y = d.baseY;
-      d.x = 100;
-    });
 
-    // Start racing immediately with no countdown!
-    beginRace();
+    prepareDucksForStartLine();
+    updateAndRender();
+    beginCountdown();
   }
 });
 
@@ -787,6 +785,24 @@ socket.on('game_reset_race', () => {
 
 function triggerSetTimerAndStart() {
   goToReadyState();
+}
+
+function prepareDucksForStartLine() {
+  const startWaterY = RIVER_TOP + RIVER_PADDING;
+  const endWaterY = RIVER_BOTTOM - RIVER_PADDING;
+  const usableHeight = endWaterY - startWaterY;
+  const laneHeight = usableHeight / ducks.length;
+
+  ducks.forEach((d, idx) => {
+    d.baseY = startWaterY + (idx * laneHeight) + (laneHeight / 2);
+    d.y = d.baseY;
+    d.x = START_LINE_X + 35;
+    d.speed = 0;
+    d.progress = 0;
+    d.rank = null;
+    d.finishTime = null;
+    d.bobbingPhase = Math.random() * 10;
+  });
 }
 
 function goToReadyState() {
@@ -815,8 +831,10 @@ function goToReadyState() {
     // Ensure shuffle and start buttons are visible in ready state
     const btnShuffle = readyOverlay.querySelector('.btn-shuffle');
     const btnStart = readyOverlay.querySelector('.btn-start');
+    const btnClear = readyOverlay.querySelector('.btn-clear-race');
     if (btnShuffle) btnShuffle.classList.remove('hidden');
     if (btnStart) btnStart.classList.remove('hidden');
+    if (btnClear) btnClear.classList.remove('hidden');
   }
   
   // Show timer screen
@@ -825,22 +843,7 @@ function goToReadyState() {
     timerScreen.textContent = formatSecondsToStopwatch(raceDuration);
   }
   
-  // Position lanes dynamically behind checkered line
-  const startWaterY = 305;
-  const endWaterY = 545;
-  const usableHeight = endWaterY - startWaterY;
-  const laneHeight = usableHeight / ducks.length;
-
-  ducks.forEach((d, idx) => {
-    d.baseY = startWaterY + (idx * laneHeight) + (laneHeight / 2);
-    d.y = d.baseY;
-    d.x = 100;
-    d.speed = 0;
-    d.rank = null;
-    d.finishTime = null;
-    d.bobbingPhase = Math.random() * 10;
-  });
-
+  prepareDucksForStartLine();
   cameraX = 0;
   particlePool = [];
   
@@ -854,8 +857,10 @@ function startRaceFromReady() {
   if (readyOverlay) {
     const btnShuffle = readyOverlay.querySelector('.btn-shuffle');
     const btnStart = readyOverlay.querySelector('.btn-start');
+    const btnClear = readyOverlay.querySelector('.btn-clear-race');
     if (btnShuffle) btnShuffle.classList.add('hidden');
     if (btnStart) btnStart.classList.add('hidden');
+    if (btnClear) btnClear.classList.add('hidden');
   }
   
   // Trigger race start across all screens
@@ -873,6 +878,8 @@ function formatSecondsToStopwatch(seconds) {
 function beginCountdown() {
   gameStatus = 'counting_down';
   lobbyPanel.style.display = 'none';
+  const readyOverlay = document.getElementById('ready-racing-overlay');
+  if (readyOverlay) readyOverlay.classList.add('hidden');
   countdownOverlay.classList.remove('hidden');
   countdownVal = countdownDuration;
   countdownNumber.textContent = countdownVal;
@@ -913,16 +920,18 @@ function beginRace() {
     readyOverlay.classList.remove('hidden');
     const btnShuffle = readyOverlay.querySelector('.btn-shuffle');
     const btnStart = readyOverlay.querySelector('.btn-start');
+    const btnClear = readyOverlay.querySelector('.btn-clear-race');
     if (btnShuffle) btnShuffle.classList.add('hidden');
     if (btnStart) btnStart.classList.add('hidden');
+    if (btnClear) btnClear.classList.add('hidden');
   }
   
   playSound(soundSplash);
   playSound(soundCheering);
 
   // Position lanes dynamically in the water area (avoiding sky and grass banks)
-  const startWaterY = 305;
-  const endWaterY = 545;
+  const startWaterY = RIVER_TOP + RIVER_PADDING;
+  const endWaterY = RIVER_BOTTOM - RIVER_PADDING;
   const usableHeight = endWaterY - startWaterY;
   const laneHeight = usableHeight / ducks.length;
 
@@ -968,7 +977,7 @@ function beginRace() {
   ducks.forEach((d, idx) => {
     d.baseY = startWaterY + (idx * laneHeight) + (laneHeight / 2);
     d.y = d.baseY;
-    d.x = (250 - (d.y - 285) * 6 / 13) - 35;
+    d.x = START_LINE_X + 35;
     d.speed = 0;
     d.progress = 0;
     d.rank = null;
@@ -989,6 +998,9 @@ function beginRace() {
     
     d.phase1 = Math.random() * Math.PI * 2;
     d.phase2 = Math.random() * Math.PI * 2;
+    d.burstPhase = Math.random() * Math.PI * 2;
+    d.laneDriftPhase = Math.random() * Math.PI * 2;
+    d.cruiseBias = 0.965 + Math.random() * 0.07;
     
     // Assign target spacing offset at the finish line
     d.finishOffset = - (d.targetRank - 1) * 0.008;
@@ -1030,38 +1042,34 @@ function updatePhysics() {
 
   ducks.forEach(d => {
     // Update bobbing waddling phase
-    d.bobbingPhase += 0.08;
+    d.bobbingPhase += 0.11 + Math.min(0.09, Math.abs(d.speed || 0) * 0.004);
 
     // Staggered finish delay formula based on pre-assigned targetRank
-    const personalDuration = raceDuration + (d.targetRank - 1) * 0.6;
+    const personalDuration = raceDuration + (d.targetRank - 1) * 0.55;
     let duckProgress = elapsed / personalDuration;
+    const clampedProgress = Math.min(Math.max(duckProgress, 0), 1);
+    const raceEnvelope = Math.sin(clampedProgress * Math.PI);
 
-    // Organic envelope (smooth dome shape peaking at the middle of the race and decaying to 0 at the start and end)
-    // Damp waves completely when the duck reaches the finish line (duckProgress >= 1.0)
-    let envelope = 0;
-    if (duckProgress < 1.0) {
-      envelope = Math.sin(duckProgress * Math.PI);
+    // Smooth acceleration off the line with lively but controlled mid-race surges.
+    const accelerationCurve = 1 - Math.pow(1 - clampedProgress, 1.45);
+    const lateSettle = clampedProgress > 0.84 ? (1 - (clampedProgress - 0.84) / 0.16) : 1;
+    const wave1 = Math.sin(clampedProgress * Math.PI * d.freq1 + d.phase1) * d.amp1;
+    const wave2 = Math.cos(clampedProgress * Math.PI * d.freq2 + d.phase2) * d.amp2;
+    const burst = Math.sin(elapsed * 2.7 + d.burstPhase) * 0.006 * raceEnvelope;
+    const finishBias = (1 - d.targetRank) * 0.0025 * Math.max(0, clampedProgress - 0.72);
+    let targetProgress = accelerationCurve * d.cruiseBias + (wave1 + wave2) * raceEnvelope * Math.max(0.15, lateSettle) + burst + finishBias;
+    if (duckProgress >= 1) {
+      targetProgress = 1 + Math.min(0.12, (duckProgress - 1) * 0.45) + (ducks.length - d.targetRank) * 0.0015;
     }
 
-    // Sinusoidal surging waves for lifelike, extremely smooth overtaking (subtle amplitudes for silk-like motion)
-    let wave1 = Math.sin(duckProgress * Math.PI * d.freq1 + d.phase1) * d.amp1;
-    let wave2 = Math.cos(duckProgress * Math.PI * d.freq2 + d.phase2) * d.amp2;
+    d.progress = Math.max(0, Math.min(targetProgress, 1.12));
 
-    // Subtle waddling paddling surge (paddling bursts twice per bobbing cycle)
-    let paddleSurge = Math.sin(d.bobbingPhase * 2) * 0.003;
-
-    let finalProgress = duckProgress + (wave1 + wave2 + paddleSurge) * envelope;
-
-    // Strict Progress clamping (finalProgress is mathematically guaranteed strictly increasing with tuned wave parameters)
-    d.progress = Math.max(0, Math.min(finalProgress, 1.12));
-
-    // Keep ducks strictly inside their own lanes: no messy diagonal crossing!
-    // But add an extremely subtle, organic waddling float (max 1.2px) so they feel like they are floating on water!
-    const floatWaddle = Math.sin(duckProgress * Math.PI * 4 + d.phase1) * 1.2;
+    // Keep ducks in lanes, with a small water drift so they feel like they are swimming instead of sliding.
+    const floatWaddle = Math.sin(elapsed * 2.8 + d.laneDriftPhase) * Math.min(5, 1.4 + laneHeightForDuckCount() * 0.035);
     d.y = d.baseY + floatWaddle;
 
     // Convert progress to coordinate position (startX = diagonal start, endX = COURSE_LENGTH)
-    const startX = (250 - (d.y - 285) * 6 / 13) - 35;
+    const startX = START_LINE_X + 35;
     const endX = COURSE_LENGTH;
     const distance = endX - startX;
     let targetX = startX + d.progress * distance;
@@ -1072,17 +1080,16 @@ function updatePhysics() {
       targetX = restX;
     }
 
-    // Buttery-smooth easing pursuit of targetX:
     if (d.x === undefined || d.x === 0 || d.x < 0) {
       d.x = startX;
     }
     
     let dx = targetX - d.x;
     
-    // Dynamic pursuit factor: gentle, slow, and continuous easing during the race, and fast snapping once crossed to ensure 100% precision
-    let easeFactor = 0.055; // Highly elegant, slow, and continuous waddle waddle!
+    // Faster pursuit makes the race feel physical and keeps the camera from outrunning the field.
+    let easeFactor = 0.22;
     if (duckProgress >= 1.0) {
-      easeFactor = 0.25; // Snaps quickly and precisely past the finish line!
+      easeFactor = 0.35;
     }
     
     d.x += dx * easeFactor;
@@ -1107,16 +1114,31 @@ function updatePhysics() {
     }
   });
 
-  // Camera tracking: focus on the leading duck that hasn't finished yet
-  let activeMaxX = 0;
-  ducks.forEach(d => {
-    if (d.rank === null && d.x > activeMaxX) activeMaxX = d.x;
-  });
-  
-  if (activeMaxX === 0) activeMaxX = COURSE_LENGTH;
-  
-  const targetCamX = Math.max(0, Math.min(COURSE_LENGTH - VIEW_WIDTH + 120, activeMaxX - VIEW_WIDTH * 0.45));
-  cameraX += (targetCamX - cameraX) * 0.06;
+  updateRaceCamera();
+}
+
+function laneHeightForDuckCount() {
+  const startWaterY = RIVER_TOP + RIVER_PADDING;
+  const endWaterY = RIVER_BOTTOM - RIVER_PADDING;
+  return (endWaterY - startWaterY) / Math.max(1, ducks.length);
+}
+
+function updateRaceCamera() {
+  const racingDucks = ducks.filter(d => d.rank === null);
+  const focusDucks = racingDucks.length ? racingDucks : ducks;
+  const sortedByX = [...focusDucks].sort((a, b) => b.x - a.x);
+  const packSize = Math.max(2, Math.ceil(sortedByX.length * 0.6));
+  const leadPack = sortedByX.slice(0, packSize);
+  const leaderX = sortedByX[0]?.x || 0;
+  const packCenterX = leadPack.reduce((sum, d) => sum + d.x, 0) / leadPack.length;
+  const packSpeed = leadPack.reduce((sum, d) => sum + Math.max(0, d.speed || 0), 0) / leadPack.length;
+  const focusX = Math.max(packCenterX, leaderX - 150);
+  const lookAhead = Math.min(160, 45 + packSpeed * 7);
+  const maxCameraX = Math.max(0, COURSE_LENGTH - VIEW_WIDTH + 260);
+  const targetCamX = Math.max(0, Math.min(maxCameraX, focusX + lookAhead - VIEW_WIDTH * 0.62));
+  const distance = Math.abs(targetCamX - cameraX);
+  const followSpeed = distance > 220 ? 0.46 : CAMERA_FOLLOW_SPEED;
+  cameraX += (targetCamX - cameraX) * followSpeed;
 }
 
 // ----------------------------------------------------
@@ -1170,8 +1192,8 @@ function init3D() {
   scene.fog = new THREE.FogExp2('#87ceeb', 0.0004); // Atmospheric fog
 
   // 3. Initialize Camera
-  camera = new THREE.PerspectiveCamera(40, VIEW_WIDTH / VIEW_HEIGHT, 1, 10000);
-  camera.position.set(0, 320, 480); // x, y, z
+  camera = new THREE.PerspectiveCamera(46, VIEW_WIDTH / VIEW_HEIGHT, 1, 10000);
+  camera.position.set(0, 210, 430); // x, y, z
 
   // 4. Initialize Lights
   const ambientLight = new THREE.AmbientLight('#ffffff', 0.55);
@@ -1193,16 +1215,16 @@ function init3D() {
   scene.add(sunLight);
 
   // 5. Add Banks (ground on top and bottom of the river)
-  const bankGeo = new THREE.BoxGeometry(COURSE_LENGTH + 2000, 100, 400);
+  const bankGeo = new THREE.BoxGeometry(COURSE_LENGTH + 2000, 100, 420);
   const bankMat = new THREE.MeshStandardMaterial({ color: '#55a630', roughness: 0.8, metalness: 0.1 });
   
   const topBank = new THREE.Mesh(bankGeo, bankMat);
-  topBank.position.set(COURSE_LENGTH / 2, -50, -320); // Z = -320
+  topBank.position.set(COURSE_LENGTH / 2, -50, -RIVER_3D_HALF_WIDTH - 230);
   topBank.receiveShadow = true;
   scene.add(topBank);
 
   const bottomBank = new THREE.Mesh(bankGeo, bankMat);
-  bottomBank.position.set(COURSE_LENGTH / 2, -50, 320); // Z = 320
+  bottomBank.position.set(COURSE_LENGTH / 2, -50, RIVER_3D_HALF_WIDTH + 230);
   bottomBank.receiveShadow = true;
   scene.add(bottomBank);
 
@@ -1234,7 +1256,7 @@ function init3D() {
   }
 
   // 7. Add Realistic Water Plane with low-poly undulating waves
-  waterGeometry = new THREE.PlaneGeometry(COURSE_LENGTH + 2000, 440, 64, 16);
+  waterGeometry = new THREE.PlaneGeometry(COURSE_LENGTH + 2000, RIVER_3D_HALF_WIDTH * 2, 80, 24);
   waterGeometry.rotateX(-Math.PI / 2);
   waterMaterial = new THREE.MeshStandardMaterial({
     color: '#006d77',
@@ -1262,25 +1284,25 @@ function init3D() {
   const pillarMat = new THREE.MeshStandardMaterial({ color: '#ef4444', roughness: 0.5 });
   
   const p1 = new THREE.Mesh(pillarGeo, pillarMat);
-  p1.position.set(COURSE_LENGTH, 130, -210);
+  p1.position.set(COURSE_LENGTH, 130, -RIVER_3D_HALF_WIDTH);
   p1.castShadow = true;
   scene.add(p1);
   finishPillars.push(p1);
 
   const p2 = new THREE.Mesh(pillarGeo, pillarMat);
-  p2.position.set(COURSE_LENGTH, 130, 210);
+  p2.position.set(COURSE_LENGTH, 130, RIVER_3D_HALF_WIDTH);
   p2.castShadow = true;
   scene.add(p2);
   finishPillars.push(p2);
 
-  const bannerGeo = new THREE.BoxGeometry(10, 30, 420);
+  const bannerGeo = new THREE.BoxGeometry(10, 30, RIVER_3D_HALF_WIDTH * 2);
   const bannerMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.6 });
   const bannerMesh = new THREE.Mesh(bannerGeo, bannerMat);
   bannerMesh.position.set(COURSE_LENGTH, 230, 0);
   bannerMesh.castShadow = true;
   scene.add(bannerMesh);
 
-  for (let cz = -200; cz <= 200; cz += 20) {
+  for (let cz = -RIVER_3D_HALF_WIDTH + 10; cz <= RIVER_3D_HALF_WIDTH - 10; cz += 20) {
     const boxGeo = new THREE.BoxGeometry(11, 31, 10);
     const boxMat = new THREE.MeshBasicMaterial({ color: (Math.round((cz + 200) / 20) % 2 === 0) ? '#000000' : '#ffffff' });
     const checkMesh = new THREE.Mesh(boxGeo, boxMat);
@@ -1661,7 +1683,7 @@ function render3D() {
     const group = duck3DGroups[d.id];
     if (!group) return;
 
-    const targetZ = d.y - 425;
+    const targetZ = mapCanvasYTo3DZ(d.y);
     
     group.position.x = d.x;
     group.position.z = targetZ;
@@ -1706,19 +1728,31 @@ function render3D() {
   const numDucks = ducks.length;
   // Calculate dynamic scale factor based on number of ducks (supporting 2 to 30)
   const tScale = Math.max(0, Math.min(1, (numDucks - 2) / 28)); // 0 for 2 ducks, 1 for 30 ducks
-  const targetCamY = 120 + tScale * 180;
-  const targetCamZ = 220 + tScale * 260;
+  const racingDucks = ducks.filter(d => d.rank === null);
+  const focusDucks = racingDucks.length ? racingDucks : ducks;
+  const avgLaneZ = focusDucks.length
+    ? focusDucks.reduce((sum, d) => sum + mapCanvasYTo3DZ(d.y), 0) / focusDucks.length
+    : 0;
+  const targetCamY = 135 + tScale * 120;
+  const targetCamZ = 360 + tScale * 210;
 
-  camera.position.x += (cameraX - camera.position.x) * 0.06;
-  camera.position.y += (targetCamY - camera.position.y) * 0.06;
-  camera.position.z += (targetCamZ - camera.position.z) * 0.06;
-  camera.lookAt(new THREE.Vector3(camera.position.x + 60, -20, 0));
+  camera.position.x += (cameraX - camera.position.x) * 0.32;
+  camera.position.y += (targetCamY - camera.position.y) * 0.08;
+  camera.position.z += (targetCamZ - camera.position.z) * 0.08;
+  camera.lookAt(new THREE.Vector3(camera.position.x + 150, 4, avgLaneZ * 0.18));
 
   if (sunLight) {
     sunLight.position.x = camera.position.x + 300;
   }
 
   renderer.render(scene, camera);
+}
+
+function mapCanvasYTo3DZ(y) {
+  const usableTop = RIVER_TOP + RIVER_PADDING;
+  const usableBottom = RIVER_BOTTOM - RIVER_PADDING;
+  const normalized = (y - usableTop) / Math.max(1, usableBottom - usableTop);
+  return -RIVER_3D_HALF_WIDTH + Math.max(0, Math.min(1, normalized)) * RIVER_3D_HALF_WIDTH * 2;
 }
 
 function render2D() {
@@ -1817,7 +1851,7 @@ function drawBackgroundParallax() {
 
   // 4. Grass bank (vibrant light green)
   ctx.fillStyle = '#4cd137'; // vibrant green
-  ctx.fillRect(cameraX, 150, VIEW_WIDTH, 120);
+  ctx.fillRect(cameraX, 150, VIEW_WIDTH, RIVER_TOP - 150 - 14);
 
   // 5. Green bushes along the grass bank
   ctx.fillStyle = '#44bd32'; // darker green for bushes
@@ -1849,21 +1883,21 @@ function drawBackgroundParallax() {
 
   // 7. Brown River bank (dirt shore line)
   ctx.fillStyle = '#8c5638'; // brown dirt color
-  ctx.fillRect(cameraX, 270, VIEW_WIDTH, 15);
+  ctx.fillRect(cameraX, RIVER_TOP - 15, VIEW_WIDTH, 15);
 
   // 8. Water area (ocean blue)
   ctx.fillStyle = '#00a8ff'; // vibrant water blue
-  ctx.fillRect(cameraX, 285, VIEW_WIDTH, VIEW_HEIGHT - 285);
+  ctx.fillRect(cameraX, RIVER_TOP, VIEW_WIDTH, RIVER_BOTTOM - RIVER_TOP);
   
   // 9. Straight Checkered starting line at X = 80
   const N = 26; // number of checkered segments
-  const segHeight = 260 / N;
+  const segHeight = (RIVER_BOTTOM - RIVER_TOP) / N;
   const lineW = 10; // width of each checkered block
   for (let i = 0; i < N; i++) {
-    const y1 = 285 + i * segHeight;
+    const y1 = RIVER_TOP + i * segHeight;
     const y2 = y1 + segHeight;
-    const x1 = 80;
-    const x2 = 80;
+    const x1 = START_LINE_X;
+    const x2 = START_LINE_X;
     
     // Segment 1 (left half of checkered line)
     ctx.fillStyle = (i % 2 === 0) ? '#ffffff' : '#000000';
@@ -1892,7 +1926,7 @@ function drawBackgroundParallax() {
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
   ducks.forEach((d, idx) => {
-    const startX = 80;
+    const startX = START_LINE_X;
     ctx.fillText(`${idx + 1}`, startX - 35, d.baseY + 5);
   });
 }
@@ -1903,10 +1937,10 @@ function drawFinishLine() {
 
   ctx.save();
   ctx.fillStyle = '#fff';
-  ctx.fillRect(lineX, 285, 40, VIEW_HEIGHT - 285);
+  ctx.fillRect(lineX, RIVER_TOP, 40, RIVER_BOTTOM - RIVER_TOP);
 
   ctx.fillStyle = '#000';
-  for (let y = 285; y < VIEW_HEIGHT; y += stripeWidth * 2) {
+  for (let y = RIVER_TOP; y < RIVER_BOTTOM; y += stripeWidth * 2) {
     ctx.fillRect(lineX, y, stripeWidth, stripeWidth);
     ctx.fillRect(lineX + stripeWidth, y + stripeWidth, stripeWidth, stripeWidth);
   }
@@ -1937,7 +1971,7 @@ function drawWaterRippleDetails() {
     ctx.lineDashOffset = flowOffset;
     const dividerY = d.y - (d.y - ducks[idx - 1].y) / 2;
     ctx.moveTo(0, dividerY);
-    ctx.lineTo(COURSE_LENGTH + 200, dividerY);
+    ctx.lineTo(COURSE_LENGTH + 260, dividerY);
     ctx.stroke();
   });
   ctx.setLineDash([]);
@@ -1948,7 +1982,7 @@ function drawWaterRippleDetails() {
   const flowT = Date.now() * 0.0015;
   
   for (let i = 0; i < 15; i++) {
-    const waveY = 295 + (i * 18);
+    const waveY = RIVER_TOP + 12 + (i * ((RIVER_BOTTOM - RIVER_TOP - 24) / 14));
     ctx.beginPath();
     // Draw a long flowing wave curve
     for (let x = cameraX; x < cameraX + VIEW_WIDTH + 100; x += 40) {
@@ -1974,7 +2008,7 @@ function drawWaterRippleDetails() {
     let wx = (startX - (t * 50 * flowSpeed)) % (COURSE_LENGTH + 400);
     if (wx < -50) wx += (COURSE_LENGTH + 400);
     
-    let wy = 295 + Math.abs(Math.cos(i * 987.654)) * (VIEW_HEIGHT - 315);
+    let wy = RIVER_TOP + 10 + Math.abs(Math.cos(i * 987.654)) * (RIVER_BOTTOM - RIVER_TOP - 20);
     
     ctx.beginPath();
     ctx.arc(wx, wy, 2 + Math.abs(seed) * 3, 0, Math.PI * 2);

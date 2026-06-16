@@ -49,6 +49,16 @@ let localStatus = 'idle';
 let localBanners = {};
 let activeRoomId = null;
 
+function escapeHTML(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[char]));
+}
+
 // Initialize overlay & listeners when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   const roomInput = document.getElementById('input-room-id');
@@ -365,6 +375,8 @@ function renderRoster() {
     
     // Status color
     const color = d.color || '#ffcc00';
+    const safeId = escapeHTML(d.id);
+    const safeName = escapeHTML(d.name);
     
     // Check current rigged status
     const is1st = localRigged.first === d.id;
@@ -380,18 +392,18 @@ function renderRoster() {
 
     row.innerHTML = `
       <div class="duck-info">
-        <div class="duck-color-dot" id="dot-color-${d.id}" style="background-color: ${color}"></div>
+        <div class="duck-color-dot" id="dot-color-${safeId}" style="background-color: ${escapeHTML(color)}"></div>
         <div class="duck-text-details">
-          <span class="duck-name">${d.name}</span>
-          <select class="duck-style-select" onchange="changeDuckStyle('${d.id}', this.value)">
+          <span class="duck-name">${safeName}</span>
+          <select class="duck-style-select" onchange="changeDuckStyle('${safeId}', this.value)">
             ${styleOptions}
           </select>
         </div>
       </div>
       <div class="rigging-actions">
-        <button class="rig-action-btn ${is1st ? 'active-1st' : ''}" id="rig-1st-${d.id}" onclick="toggleRig('${d.id}', 1)">🥇 1st</button>
-        <button class="rig-action-btn ${is2nd ? 'active-2nd' : ''}" id="rig-2nd-${d.id}" onclick="toggleRig('${d.id}', 2)">🥈 2nd</button>
-        <button class="rig-action-btn ${is3rd ? 'active-3rd' : ''}" id="rig-3rd-${d.id}" onclick="toggleRig('${d.id}', 3)">🥉 3rd</button>
+        <button class="rig-action-btn ${is1st ? 'active-1st' : ''}" id="rig-1st-${safeId}" onclick="toggleRig('${safeId}', 1)">🥇 1st</button>
+        <button class="rig-action-btn ${is2nd ? 'active-2nd' : ''}" id="rig-2nd-${safeId}" onclick="toggleRig('${safeId}', 2)">🥈 2nd</button>
+        <button class="rig-action-btn ${is3rd ? 'active-3rd' : ''}" id="rig-3rd-${safeId}" onclick="toggleRig('${safeId}', 3)">🥉 3rd</button>
       </div>
     `;
     duckRosterList.appendChild(row);
@@ -525,13 +537,13 @@ function renderHistory(history) {
 
     item.innerHTML = `
       <div class="hist-top">
-        <span>Round #${roundNum} (${round.duckCount} ducks)</span>
-        <span>⏱️ ${round.timestamp}</span>
+        <span>Round #${roundNum} (${escapeHTML(round.duckCount)} ducks)</span>
+        <span>⏱️ ${escapeHTML(round.timestamp)}</span>
       </div>
       <div class="hist-winners">
-        <span class="hist-winner-tag ht-1st">🥇 ${round.winners.first}</span>
-        <span class="hist-winner-tag ht-2nd">🥈 ${round.winners.second}</span>
-        <span class="hist-winner-tag ht-3rd">🥉 ${round.winners.third}</span>
+        <span class="hist-winner-tag ht-1st">🥇 ${escapeHTML(round.winners.first)}</span>
+        <span class="hist-winner-tag ht-2nd">🥈 ${escapeHTML(round.winners.second)}</span>
+        <span class="hist-winner-tag ht-3rd">🥉 ${escapeHTML(round.winners.third)}</span>
       </div>
     `;
     historyLogList.appendChild(item);

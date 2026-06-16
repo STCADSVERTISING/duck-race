@@ -31,6 +31,13 @@ const soundQuack = document.getElementById('sound-quack');
 const COURSE_LENGTH = 2800; // Finish line X position
 const VIEW_WIDTH = 1024;
 const VIEW_HEIGHT = 576;
+const RIVER_TOP = 235;
+const RIVER_BOTTOM = VIEW_HEIGHT;
+const RIVER_PADDING = 30;
+const START_LINE_X = 90;
+const RIVER_3D_HALF_WIDTH = 310;
+const CAMERA_FOLLOW_SPEED = 0.38;
+const FINISH_RUNWAY = 560;
 
 // Local State
 let ducks = [];
@@ -62,18 +69,38 @@ let showDuckNumbers = true;
 let showDuckLogo = false;
 let currentLanguage = 'en'; // Force English-only interface
 
-// Preset Color Palettes & 10 Beautifully Designed Custom Duck Styles
+// Preset Color Palettes & 30 Beautifully Designed Custom Duck Styles
 const DUCK_STYLES = [
-  { name: 'Classic Yellow 💛', thName: 'Classic Yellow 💛', color: '#ffd700', wingColor: '#e5c100', beakColor: '#ff6600', accessory: 'none' },
-  { name: 'Cool Captain 🧑‍✈️', thName: 'Cool Captain 🧑‍✈️', color: '#f3f4f6', wingColor: '#cbd5e1', beakColor: '#ff6600', accessory: 'captain_hat' },
-  { name: 'Rubber Pirate 🏴‍☠️', thName: 'Rubber Pirate 🏴‍☠️', color: '#475569', wingColor: '#334155', beakColor: '#e11d48', accessory: 'pirate_patch' },
-  { name: 'Neon Cyber ⚡', thName: 'Neon Cyber ⚡', color: '#39ff14', wingColor: '#2bb50e', beakColor: '#ff007f', accessory: 'neon_sunglasses' },
-  { name: 'Princess Pink 🌸', thName: 'Princess Pink 🌸', color: '#f72585', wingColor: '#b5179e', beakColor: '#ffd166', accessory: 'none' },
-  { name: 'Gentleman Slate 🎩', thName: 'Gentleman Slate 🎩', color: '#1e293b', wingColor: '#0f172a', beakColor: '#d97706', accessory: 'gentleman_hat' },
-  { name: 'Unicorn Pastel 🦄', thName: 'Unicorn Pastel 🦄', color: '#c084fc', wingColor: '#a855f7', beakColor: '#fb7185', accessory: 'unicorn_horn' },
-  { name: 'Super Hero Red 🦸', thName: 'Super Hero Red 🦸', color: '#ef4444', wingColor: '#b91c1c', beakColor: '#fbbf24', accessory: 'hero_mask' },
-  { name: 'Aqua Diver 🤿', thName: 'Aqua Diver 🤿', color: '#06b6d4', wingColor: '#0891b2', beakColor: '#f97316', accessory: 'diver_goggles' },
-  { name: 'Gold Laurel 🏆', thName: 'Gold Laurel 🏆', color: '#fbbf24', wingColor: '#d97706', beakColor: '#ea580c', accessory: 'gold_laurel' }
+  { name: 'Classic Yellow', thName: 'Classic Yellow', color: '#ffd700', wingColor: '#e5c100', beakColor: '#ff6600', accessory: 'none' },
+  { name: 'Cool Captain', thName: 'Cool Captain', color: '#f3f4f6', wingColor: '#cbd5e1', beakColor: '#ff6600', accessory: 'captain_hat' },
+  { name: 'Midnight Slate', thName: 'Midnight Slate', color: '#475569', wingColor: '#334155', beakColor: '#e11d48', accessory: 'bandana', accessoryColor: '#ef4444' },
+  { name: 'Neon Lime', thName: 'Neon Lime', color: '#39ff14', wingColor: '#2bb50e', beakColor: '#ff007f', accessory: 'sunglasses', accessoryColor: '#00e5ff' },
+  { name: 'Princess Pink', thName: 'Princess Pink', color: '#f72585', wingColor: '#b5179e', beakColor: '#ffd166', accessory: 'party_hat', accessoryColor: '#ffd700' },
+  { name: 'Gentleman Navy', thName: 'Gentleman Navy', color: '#1e293b', wingColor: '#0f172a', beakColor: '#d97706', accessory: 'top_hat', accessoryColor: '#ef4444' },
+  { name: 'Lavender Pop', thName: 'Lavender Pop', color: '#c084fc', wingColor: '#a855f7', beakColor: '#fb7185', accessory: 'glasses', accessoryColor: '#ffffff' },
+  { name: 'Hero Red', thName: 'Hero Red', color: '#ef4444', wingColor: '#b91c1c', beakColor: '#fbbf24', accessory: 'sunglasses', accessoryColor: '#111111' },
+  { name: 'Aqua Diver', thName: 'Aqua Diver', color: '#06b6d4', wingColor: '#0891b2', beakColor: '#f97316', accessory: 'glasses', accessoryColor: '#0ea5e9' },
+  { name: 'Gold Medal', thName: 'Gold Medal', color: '#fbbf24', wingColor: '#d97706', beakColor: '#ea580c', accessory: 'none' },
+  { name: 'Mint Splash', thName: 'Mint Splash', color: '#2dd4bf', wingColor: '#0f766e', beakColor: '#fb923c', accessory: 'headphones', accessoryColor: '#14b8a6' },
+  { name: 'Berry Jam', thName: 'Berry Jam', color: '#a21caf', wingColor: '#701a75', beakColor: '#facc15', accessory: 'party_hat', accessoryColor: '#22d3ee' },
+  { name: 'Sky Runner', thName: 'Sky Runner', color: '#38bdf8', wingColor: '#0284c7', beakColor: '#f97316', accessory: 'captain_hat' },
+  { name: 'Forest Moss', thName: 'Forest Moss', color: '#65a30d', wingColor: '#3f6212', beakColor: '#f59e0b', accessory: 'bandana', accessoryColor: '#f97316' },
+  { name: 'Coral Reef', thName: 'Coral Reef', color: '#fb7185', wingColor: '#e11d48', beakColor: '#fde047', accessory: 'glasses', accessoryColor: '#fde68a' },
+  { name: 'Royal Blue', thName: 'Royal Blue', color: '#2563eb', wingColor: '#1d4ed8', beakColor: '#fbbf24', accessory: 'top_hat', accessoryColor: '#facc15' },
+  { name: 'Tangerine', thName: 'Tangerine', color: '#f97316', wingColor: '#c2410c', beakColor: '#fde047', accessory: 'none' },
+  { name: 'Cotton Candy', thName: 'Cotton Candy', color: '#f9a8d4', wingColor: '#ec4899', beakColor: '#facc15', accessory: 'party_hat', accessoryColor: '#a78bfa' },
+  { name: 'Cyber Teal', thName: 'Cyber Teal', color: '#00f5d4', wingColor: '#00bbf9', beakColor: '#fee440', accessory: 'sunglasses', accessoryColor: '#f15bb5' },
+  { name: 'Ruby Flash', thName: 'Ruby Flash', color: '#dc2626', wingColor: '#991b1b', beakColor: '#fb923c', accessory: 'mohawk', accessoryColor: '#facc15' },
+  { name: 'Emerald Ace', thName: 'Emerald Ace', color: '#10b981', wingColor: '#047857', beakColor: '#f59e0b', accessory: 'captain_hat' },
+  { name: 'Plum Night', thName: 'Plum Night', color: '#7e22ce', wingColor: '#581c87', beakColor: '#fbbf24', accessory: 'headphones', accessoryColor: '#c084fc' },
+  { name: 'Snow Puff', thName: 'Snow Puff', color: '#f8fafc', wingColor: '#e2e8f0', beakColor: '#fb923c', accessory: 'bandana', accessoryColor: '#0ea5e9' },
+  { name: 'Lemon Zing', thName: 'Lemon Zing', color: '#fef08a', wingColor: '#fde047', beakColor: '#f97316', accessory: 'glasses', accessoryColor: '#111827' },
+  { name: 'Ocean Deep', thName: 'Ocean Deep', color: '#0f766e', wingColor: '#115e59', beakColor: '#facc15', accessory: 'sunglasses', accessoryColor: '#e0f2fe' },
+  { name: 'Rose Gold', thName: 'Rose Gold', color: '#fda4af', wingColor: '#fb7185', beakColor: '#f59e0b', accessory: 'top_hat', accessoryColor: '#f9a8d4' },
+  { name: 'Graphite Pro', thName: 'Graphite Pro', color: '#374151', wingColor: '#111827', beakColor: '#f97316', accessory: 'headphones', accessoryColor: '#22d3ee' },
+  { name: 'Violet Bolt', thName: 'Violet Bolt', color: '#8b5cf6', wingColor: '#6d28d9', beakColor: '#facc15', accessory: 'mohawk', accessoryColor: '#22c55e' },
+  { name: 'Peach Soda', thName: 'Peach Soda', color: '#fdba74', wingColor: '#fb923c', beakColor: '#fef3c7', accessory: 'party_hat', accessoryColor: '#fb7185' },
+  { name: 'Arctic Cyan', thName: 'Arctic Cyan', color: '#67e8f9', wingColor: '#22d3ee', beakColor: '#f97316', accessory: 'captain_hat' }
 ];
 
 const TRANSLATIONS = {
@@ -531,13 +558,7 @@ function cycleDuckPalette(direction) {
   ducks.forEach((d) => {
     d.styleIndex = currentPaletteIndex;
     d.color = current.color;
-    d.pattern = 'solid';
-    d.wingColor = current.wingColor || adjustBrightness(current.color, -16);
-    d.beakColor = current.beakColor || '#ff6600';
-    d.accessory = current.accessory || 'none';
   });
-
-  clear3DDucks();
 
   // Sync colors with server
   syncRosterToServer();
@@ -566,22 +587,21 @@ const GORGEOUS_COLORS = [
 const PATTERNS = ['solid', 'stripes', 'zigzag', 'polka_dots'];
 const ACCESSORIES = ['none', 'glasses', 'sunglasses', 'captain_hat', 'bandana', 'mohawk', 'top_hat', 'party_hat', 'headphones'];
 
-function randomizeDuckDesign(d) {
-  const color = GORGEOUS_COLORS[Math.floor(Math.random() * GORGEOUS_COLORS.length)];
-  d.color = color;
-  
-  d.pattern = PATTERNS[Math.floor(Math.random() * PATTERNS.length)];
-  
-  let patternColor = GORGEOUS_COLORS[Math.floor(Math.random() * GORGEOUS_COLORS.length)];
-  while (patternColor === color) {
-    patternColor = GORGEOUS_COLORS[Math.floor(Math.random() * GORGEOUS_COLORS.length)];
-  }
-  d.patternColor = patternColor;
-  
-  d.accessory = ACCESSORIES[Math.floor(Math.random() * ACCESSORIES.length)];
-  d.accessoryColor = GORGEOUS_COLORS[Math.floor(Math.random() * GORGEOUS_COLORS.length)];
-  d.wingColor = GORGEOUS_COLORS[Math.floor(Math.random() * GORGEOUS_COLORS.length)];
-  d.beakColor = ['#ff6600', '#ffd700', '#ff007f', '#ff9f1c'][Math.floor(Math.random() * 4)];
+function applyDuckStyle(d, styleIndex) {
+  const style = DUCK_STYLES[styleIndex] || DUCK_STYLES[0];
+  d.styleIndex = styleIndex;
+  d.color = style.color;
+  d.pattern = 'solid';
+  d.patternColor = style.color;
+  d.accessory = style.accessory || 'none';
+  d.accessoryColor = style.accessoryColor || '#ffffff';
+  d.wingColor = style.wingColor || adjustBrightness(style.color, -16);
+  d.beakColor = style.beakColor || '#ff6600';
+}
+
+function randomizeDuckDesign(d, styleIndex = null) {
+  const nextStyleIndex = styleIndex !== null ? styleIndex : Math.floor(Math.random() * DUCK_STYLES.length);
+  applyDuckStyle(d, nextStyleIndex);
 }
 
 function shuffleCharacters() {
@@ -590,13 +610,12 @@ function shuffleCharacters() {
   ducks.forEach(d => {
     randomizeDuckDesign(d);
   });
-  clear3DDucks();
   syncRosterToServer();
   updateAndRender();
 }
 
 function initDuckState(duckData) {
-  const styleIdx = duckData.styleIndex !== undefined ? duckData.styleIndex : Math.floor(Math.random() * 10);
+  const styleIdx = duckData.styleIndex !== undefined ? duckData.styleIndex : Math.floor(Math.random() * DUCK_STYLES.length);
   const style = DUCK_STYLES[styleIdx];
   const d = {
     id: duckData.id,
@@ -619,13 +638,11 @@ function initDuckState(duckData) {
   d.pattern = duckData.pattern || 'solid';
   d.patternColor = duckData.patternColor || d.color;
   d.accessory = duckData.accessory || style.accessory || 'none';
-  d.accessoryColor = duckData.accessoryColor || '#ffffff';
+  d.accessoryColor = duckData.accessoryColor || style.accessoryColor || '#ffffff';
   d.wingColor = duckData.wingColor || style.wingColor || adjustBrightness(d.color, -16);
   d.beakColor = duckData.beakColor || style.beakColor || '#ff6600';
 
-  if (duckData.pattern === undefined && duckData.accessory === undefined) {
-    randomizeDuckDesign(d);
-  }
+  if (!duckData.color) randomizeDuckDesign(d, styleIdx);
 
   return d;
 }
@@ -635,7 +652,7 @@ function generateRosterFromSlider() {
 
   const temp = [];
   for (let i = 1; i <= count; i++) {
-    const styleIdx = manualAccessorySet ? currentPaletteIndex : Math.floor(Math.random() * 10);
+    const styleIdx = manualAccessorySet ? currentPaletteIndex : Math.floor(Math.random() * DUCK_STYLES.length);
     const style = DUCK_STYLES[styleIdx];
     const item = {
       id: `duck-num-${i}`,
@@ -643,7 +660,7 @@ function generateRosterFromSlider() {
       styleIndex: styleIdx,
       color: style.color
     };
-    randomizeDuckDesign(item);
+    applyDuckStyle(item, styleIdx);
     temp.push(item);
   }
 
@@ -661,7 +678,7 @@ function updateRosterFromConsoleNames() {
 
   const temp = lines.map((name, index) => {
     const existing = ducks.find(d => d.name === name);
-    const styleIdx = existing ? existing.styleIndex : (manualAccessorySet ? currentPaletteIndex : Math.floor(Math.random() * 10));
+    const styleIdx = existing ? existing.styleIndex : (manualAccessorySet ? currentPaletteIndex : Math.floor(Math.random() * DUCK_STYLES.length));
     const style = DUCK_STYLES[styleIdx];
     const item = {
       id: existing ? existing.id : `duck-${Date.now()}-${index}`,
@@ -669,6 +686,7 @@ function updateRosterFromConsoleNames() {
       styleIndex: styleIdx,
       color: existing ? existing.color : style.color
     };
+    if (!existing) applyDuckStyle(item, styleIdx);
     if (!existing) {
       randomizeDuckDesign(item);
     } else {
@@ -755,30 +773,6 @@ socket.on('sync_rigging', (newRigged) => {
   });
 });
 
-socket.on('game_sync_roster', (newDucks) => {
-  console.log('Roster synced from server:', newDucks);
-  ducks = newDucks.map(d => initDuckState(d));
-  
-  // Sync into lobby controls
-  if (ducks[0] && ducks[0].id.includes('num')) {
-    consoleMode = 'numbers';
-    if (duckCountSlider) {
-      duckCountSlider.value = ducks.length;
-      sliderLabel.textContent = ducks.length;
-    }
-  } else {
-    consoleMode = 'names';
-    if (consoleNamesTextarea) {
-      consoleNamesTextarea.value = ducks.map(d => d.name).join('\n');
-      consoleRosterStatus.textContent = `เป็ดที่พิมพ์: ${ducks.length} ตัว`;
-    }
-  }
-  toggleConsoleTab(consoleMode);
-
-  clear3DDucks();
-  updateAndRender();
-});
-
 socket.on('game_start_race', () => {
   if (gameStatus === 'idle' || gameStatus === 'ready') {
     // Transition screens if started from idle remotely
@@ -788,23 +782,15 @@ socket.on('game_start_race', () => {
       readyOverlay.classList.remove('hidden');
       const btnShuffle = readyOverlay.querySelector('.btn-shuffle');
       const btnStart = readyOverlay.querySelector('.btn-start');
+      const btnClear = readyOverlay.querySelector('.btn-clear-race');
       if (btnShuffle) btnShuffle.classList.add('hidden');
       if (btnStart) btnStart.classList.add('hidden');
+      if (btnClear) btnClear.classList.add('hidden');
     }
-    
-    // Position ducks equally
-    const startWaterY = 305;
-    const endWaterY = 545;
-    const usableHeight = endWaterY - startWaterY;
-    const laneHeight = usableHeight / ducks.length;
-    ducks.forEach((d, idx) => {
-      d.baseY = startWaterY + (idx * laneHeight) + (laneHeight / 2);
-      d.y = d.baseY;
-      d.x = 100;
-    });
 
-    // Start racing immediately with no countdown!
-    beginRace();
+    prepareDucksForStartLine();
+    updateAndRender();
+    beginCountdown();
   }
 });
 
@@ -818,6 +804,24 @@ socket.on('game_reset_race', () => {
 
 function triggerSetTimerAndStart() {
   goToReadyState();
+}
+
+function prepareDucksForStartLine() {
+  const startWaterY = RIVER_TOP + RIVER_PADDING;
+  const endWaterY = RIVER_BOTTOM - RIVER_PADDING;
+  const usableHeight = endWaterY - startWaterY;
+  const laneHeight = usableHeight / ducks.length;
+
+  ducks.forEach((d, idx) => {
+    d.baseY = startWaterY + (idx * laneHeight) + (laneHeight / 2);
+    d.y = d.baseY;
+    d.x = START_LINE_X + 35;
+    d.speed = 0;
+    d.progress = 0;
+    d.rank = null;
+    d.finishTime = null;
+    d.bobbingPhase = Math.random() * 10;
+  });
 }
 
 function goToReadyState() {
@@ -846,8 +850,10 @@ function goToReadyState() {
     // Ensure shuffle and start buttons are visible in ready state
     const btnShuffle = readyOverlay.querySelector('.btn-shuffle');
     const btnStart = readyOverlay.querySelector('.btn-start');
+    const btnClear = readyOverlay.querySelector('.btn-clear-race');
     if (btnShuffle) btnShuffle.classList.remove('hidden');
     if (btnStart) btnStart.classList.remove('hidden');
+    if (btnClear) btnClear.classList.remove('hidden');
   }
   
   // Show timer screen
@@ -856,22 +862,7 @@ function goToReadyState() {
     timerScreen.textContent = formatSecondsToStopwatch(raceDuration);
   }
   
-  // Position lanes dynamically behind checkered line
-  const startWaterY = 305;
-  const endWaterY = 545;
-  const usableHeight = endWaterY - startWaterY;
-  const laneHeight = usableHeight / ducks.length;
-
-  ducks.forEach((d, idx) => {
-    d.baseY = startWaterY + (idx * laneHeight) + (laneHeight / 2);
-    d.y = d.baseY;
-    d.x = 100;
-    d.speed = 0;
-    d.rank = null;
-    d.finishTime = null;
-    d.bobbingPhase = Math.random() * 10;
-  });
-
+  prepareDucksForStartLine();
   cameraX = 0;
   particlePool = [];
   
@@ -885,8 +876,10 @@ function startRaceFromReady() {
   if (readyOverlay) {
     const btnShuffle = readyOverlay.querySelector('.btn-shuffle');
     const btnStart = readyOverlay.querySelector('.btn-start');
+    const btnClear = readyOverlay.querySelector('.btn-clear-race');
     if (btnShuffle) btnShuffle.classList.add('hidden');
     if (btnStart) btnStart.classList.add('hidden');
+    if (btnClear) btnClear.classList.add('hidden');
   }
   
   // Trigger race start across all screens
@@ -904,6 +897,8 @@ function formatSecondsToStopwatch(seconds) {
 function beginCountdown() {
   gameStatus = 'counting_down';
   lobbyPanel.style.display = 'none';
+  const readyOverlay = document.getElementById('ready-racing-overlay');
+  if (readyOverlay) readyOverlay.classList.add('hidden');
   countdownOverlay.classList.remove('hidden');
   countdownVal = countdownDuration;
   countdownNumber.textContent = countdownVal;
@@ -944,16 +939,18 @@ function beginRace() {
     readyOverlay.classList.remove('hidden');
     const btnShuffle = readyOverlay.querySelector('.btn-shuffle');
     const btnStart = readyOverlay.querySelector('.btn-start');
+    const btnClear = readyOverlay.querySelector('.btn-clear-race');
     if (btnShuffle) btnShuffle.classList.add('hidden');
     if (btnStart) btnStart.classList.add('hidden');
+    if (btnClear) btnClear.classList.add('hidden');
   }
   
   playSound(soundSplash);
   playSound(soundCheering);
 
   // Position lanes dynamically in the water area (avoiding sky and grass banks)
-  const startWaterY = 305;
-  const endWaterY = 545;
+  const startWaterY = RIVER_TOP + RIVER_PADDING;
+  const endWaterY = RIVER_BOTTOM - RIVER_PADDING;
   const usableHeight = endWaterY - startWaterY;
   const laneHeight = usableHeight / ducks.length;
 
@@ -999,7 +996,7 @@ function beginRace() {
   ducks.forEach((d, idx) => {
     d.baseY = startWaterY + (idx * laneHeight) + (laneHeight / 2);
     d.y = d.baseY;
-    d.x = (250 - (d.y - 285) * 6 / 13) - 35;
+    d.x = START_LINE_X + 35;
     d.speed = 0;
     d.progress = 0;
     d.rank = null;
@@ -1020,6 +1017,9 @@ function beginRace() {
     
     d.phase1 = Math.random() * Math.PI * 2;
     d.phase2 = Math.random() * Math.PI * 2;
+    d.burstPhase = Math.random() * Math.PI * 2;
+    d.laneDriftPhase = Math.random() * Math.PI * 2;
+    d.cruiseBias = 1;
     
     // Assign target spacing offset at the finish line
     d.finishOffset = - (d.targetRank - 1) * 0.008;
@@ -1061,59 +1061,56 @@ function updatePhysics() {
 
   ducks.forEach(d => {
     // Update bobbing waddling phase
-    d.bobbingPhase += 0.08;
+    d.bobbingPhase += 0.11 + Math.min(0.09, Math.abs(d.speed || 0) * 0.004);
 
     // Staggered finish delay formula based on pre-assigned targetRank
-    const personalDuration = raceDuration + (d.targetRank - 1) * 0.6;
+    const personalDuration = raceDuration + (d.targetRank - 1) * 0.55;
     let duckProgress = elapsed / personalDuration;
+    const clampedProgress = Math.min(Math.max(duckProgress, 0), 1);
+    const raceEnvelope = Math.sin(clampedProgress * Math.PI);
 
-    // Organic envelope (smooth dome shape peaking at the middle of the race and decaying to 0 at the start and end)
-    // Damp waves completely when the duck reaches the finish line (duckProgress >= 1.0)
-    let envelope = 0;
-    if (duckProgress < 1.0) {
-      envelope = Math.sin(duckProgress * Math.PI);
+    // Smooth acceleration off the line with lively but controlled mid-race surges.
+    const accelerationCurve = 1 - Math.pow(1 - clampedProgress, 1.45);
+    const lateSettle = clampedProgress > 0.84 ? (1 - (clampedProgress - 0.84) / 0.16) : 1;
+    const finishDrive = Math.max(0, Math.min(1, (clampedProgress - 0.82) / 0.18));
+    const wave1 = Math.sin(clampedProgress * Math.PI * d.freq1 + d.phase1) * d.amp1;
+    const wave2 = Math.cos(clampedProgress * Math.PI * d.freq2 + d.phase2) * d.amp2;
+    const burst = Math.sin(elapsed * 2.7 + d.burstPhase) * 0.006 * raceEnvelope;
+    const finishBias = 0;
+    let targetProgress = accelerationCurve * d.cruiseBias + (wave1 + wave2) * raceEnvelope * Math.max(0.15, lateSettle) + burst + finishBias;
+    targetProgress = Math.max(targetProgress, clampedProgress + finishDrive * 0.018);
+    if (duckProgress >= 1) {
+      targetProgress = 1 + Math.min(0.12, (duckProgress - 1) * 0.45) + (ducks.length - d.targetRank) * 0.0015;
     }
 
-    // Sinusoidal surging waves for lifelike, extremely smooth overtaking (subtle amplitudes for silk-like motion)
-    let wave1 = Math.sin(duckProgress * Math.PI * d.freq1 + d.phase1) * d.amp1;
-    let wave2 = Math.cos(duckProgress * Math.PI * d.freq2 + d.phase2) * d.amp2;
+    d.progress = Math.max(0, Math.min(targetProgress, 1.12));
 
-    // Subtle waddling paddling surge (paddling bursts twice per bobbing cycle)
-    let paddleSurge = Math.sin(d.bobbingPhase * 2) * 0.003;
-
-    let finalProgress = duckProgress + (wave1 + wave2 + paddleSurge) * envelope;
-
-    // Strict Progress clamping (finalProgress is mathematically guaranteed strictly increasing with tuned wave parameters)
-    d.progress = Math.max(0, Math.min(finalProgress, 1.12));
-
-    // Keep ducks strictly inside their own lanes: no messy diagonal crossing!
-    // But add an extremely subtle, organic waddling float (max 1.2px) so they feel like they are floating on water!
-    const floatWaddle = Math.sin(duckProgress * Math.PI * 4 + d.phase1) * 1.2;
+    // Keep ducks in lanes, with a small water drift so they feel like they are swimming instead of sliding.
+    const floatWaddle = Math.sin(elapsed * 2.8 + d.laneDriftPhase) * Math.min(5, 1.4 + laneHeightForDuckCount() * 0.035);
     d.y = d.baseY + floatWaddle;
 
     // Convert progress to coordinate position (startX = diagonal start, endX = COURSE_LENGTH)
-    const startX = (250 - (d.y - 285) * 6 / 13) - 35;
+    const startX = START_LINE_X + 35;
     const endX = COURSE_LENGTH;
     const distance = endX - startX;
     let targetX = startX + d.progress * distance;
 
-    // Exciting staggered column parking past the finish line (strictly on-screen between 2820px and 2895px)
-    const restX = COURSE_LENGTH + 20 + (ducks.length - d.targetRank) * 7;
+    // Let each duck glide through the line before easing into a natural post-finish coast.
+    const restX = COURSE_LENGTH + 150 + (ducks.length - d.targetRank) * 12;
     if (targetX > restX) {
       targetX = restX;
     }
 
-    // Buttery-smooth easing pursuit of targetX:
     if (d.x === undefined || d.x === 0 || d.x < 0) {
       d.x = startX;
     }
     
     let dx = targetX - d.x;
     
-    // Balanced pursuit factor - smooth and realistic movement
-    let easeFactor = 0.08; // Smooth, continuous movement
+    // Drive through the finish line instead of easing to a near-stop in front of it.
+    let easeFactor = 0.22 + finishDrive * 0.16;
     if (duckProgress >= 1.0) {
-      easeFactor = 0.2; // Snaps to finish position
+      easeFactor = 0.34;
     }
     
     d.x += dx * easeFactor;
@@ -1138,35 +1135,36 @@ function updatePhysics() {
     }
   });
 
-  // Camera tracking: keep all active ducks visible on screen
-  let activeMaxX = 0;
-  let activeMinX = Infinity;
-  let activeDuckCount = 0;
-  
-  ducks.forEach(d => {
-    if (d.rank === null) {
-      if (d.x > activeMaxX) activeMaxX = d.x;
-      if (d.x < activeMinX) activeMinX = d.x;
-      activeDuckCount++;
-    }
-  });
-  
-  if (activeMaxX === 0) activeMaxX = 200; // Default to start
-  if (activeMinX === Infinity) activeMinX = activeMaxX;
-  
-  // Calculate spread to determine view
-  const duckSpread = activeMaxX - activeMinX;
-  
-  // Camera follows the LEADING duck with padding to see all ducks
-  const padding = Math.min(200, duckSpread * 0.4);
-  const targetCamX = Math.max(0, Math.min(
-    COURSE_LENGTH - VIEW_WIDTH + 50,
-    activeMaxX - VIEW_WIDTH * 0.4 - padding
-  ));
-  
-  // FAST camera follow - must keep up!
-  const cameraSpeed = 0.12;
-  cameraX += (targetCamX - cameraX) * cameraSpeed;
+  updateRaceCamera();
+}
+
+function laneHeightForDuckCount() {
+  const startWaterY = RIVER_TOP + RIVER_PADDING;
+  const endWaterY = RIVER_BOTTOM - RIVER_PADDING;
+  return (endWaterY - startWaterY) / Math.max(1, ducks.length);
+}
+
+function updateRaceCamera() {
+  const racingDucks = ducks.filter(d => d.rank === null);
+  const focusDucks = racingDucks.length ? racingDucks : ducks;
+  const sortedByX = [...focusDucks].sort((a, b) => b.x - a.x);
+  const packSize = Math.max(2, Math.ceil(sortedByX.length * 0.3));
+  const leadPack = sortedByX.slice(0, packSize);
+  const leaderX = sortedByX[0]?.x || 0;
+  const packCenterX = leadPack.reduce((sum, d) => sum + d.x, 0) / leadPack.length;
+  const packSpeed = leadPack.reduce((sum, d) => sum + Math.max(0, d.speed || 0), 0) / leadPack.length;
+  const focusX = Math.max(packCenterX, leaderX - 30);
+  const lookAhead = Math.min(300, 130 + packSpeed * 10);
+  const maxCameraX = Math.max(0, COURSE_LENGTH + FINISH_RUNWAY - VIEW_WIDTH);
+  const desiredCamX = focusX + lookAhead - VIEW_WIDTH * 0.48;
+  const headPackBackX = Math.min(...leadPack.map(d => d.x));
+  const minCamForLeader = leaderX - VIEW_WIDTH * 0.82;
+  const maxCamForHeadPack = headPackBackX - VIEW_WIDTH * 0.18;
+  const framedCamX = Math.max(minCamForLeader, Math.min(desiredCamX, maxCamForHeadPack));
+  const targetCamX = Math.max(0, Math.min(maxCameraX, framedCamX));
+  const distance = Math.abs(targetCamX - cameraX);
+  const followSpeed = distance > 180 ? 0.58 : CAMERA_FOLLOW_SPEED;
+  cameraX += (targetCamX - cameraX) * followSpeed;
 }
 
 // ----------------------------------------------------
@@ -1217,12 +1215,11 @@ function init3D() {
   // 2. Initialize Scene
   scene = new THREE.Scene();
   scene.background = new THREE.Color('#87ceeb'); // Beautiful sky blue
-  scene.fog = new THREE.FogExp2('#87ceeb', 0.0002); // Atmospheric fog - less dense
+  scene.fog = new THREE.FogExp2('#87ceeb', 0.0004); // Atmospheric fog
 
-  // 3. Initialize Camera - wide FOV, start at race beginning
-  camera = new THREE.PerspectiveCamera(55, VIEW_WIDTH / VIEW_HEIGHT, 1, 15000);
-  // Start camera at the beginning of the race course, looking at start line
-  camera.position.set(100, 380, 750);
+  // 3. Initialize Camera
+  camera = new THREE.PerspectiveCamera(43, VIEW_WIDTH / VIEW_HEIGHT, 1, 10000);
+  camera.position.set(0, 330, 560); // x, y, z
 
   // 4. Initialize Lights
   const ambientLight = new THREE.AmbientLight('#ffffff', 0.55);
@@ -1243,17 +1240,17 @@ function init3D() {
   sunLight.shadow.camera.bottom = -d;
   scene.add(sunLight);
 
-  // 5. Add Banks (ground on top and bottom of the river - WIDER river)
-  const bankGeo = new THREE.BoxGeometry(COURSE_LENGTH + 2000, 100, 600);
+  // 5. Add Banks (ground on top and bottom of the river)
+  const bankGeo = new THREE.BoxGeometry(COURSE_LENGTH + 2000, 100, 420);
   const bankMat = new THREE.MeshStandardMaterial({ color: '#55a630', roughness: 0.8, metalness: 0.1 });
   
   const topBank = new THREE.Mesh(bankGeo, bankMat);
-  topBank.position.set(COURSE_LENGTH / 2, -50, -650); // Moved further out
+  topBank.position.set(COURSE_LENGTH / 2, -50, -RIVER_3D_HALF_WIDTH - 230);
   topBank.receiveShadow = true;
   scene.add(topBank);
 
   const bottomBank = new THREE.Mesh(bankGeo, bankMat);
-  bottomBank.position.set(COURSE_LENGTH / 2, -50, 650); // Moved further out
+  bottomBank.position.set(COURSE_LENGTH / 2, -50, RIVER_3D_HALF_WIDTH + 230);
   bottomBank.receiveShadow = true;
   scene.add(bottomBank);
 
@@ -1284,13 +1281,13 @@ function init3D() {
     scene.add(cloud);
   }
 
-  // 7. Add Realistic Water Plane with low-poly undulating waves - WIDER river
-  waterGeometry = new THREE.PlaneGeometry(COURSE_LENGTH + 2000, 900, 64, 16);
+  // 7. Add Realistic Water Plane with low-poly undulating waves
+  waterGeometry = new THREE.PlaneGeometry(COURSE_LENGTH + 2000, RIVER_3D_HALF_WIDTH * 2, 80, 24);
   waterGeometry.rotateX(-Math.PI / 2);
   waterMaterial = new THREE.MeshStandardMaterial({
-    color: '#0077be',
+    color: '#006d77',
     roughness: 0.08,
-    metalness: 0.88,
+    metalness: 0.15,
     transparent: true,
     opacity: 0.88,
     flatShading: true
@@ -1308,45 +1305,36 @@ function init3D() {
     waterGeometry.userData.originalY.push(posAttr.getY(i));
   }
 
-  // 8. Add Finish Line Pillars and Checkered Banner - BIGGER and more visible
-  const pillarGeo = new THREE.CylinderGeometry(12, 12, 350, 16);
-  const pillarMat = new THREE.MeshStandardMaterial({ color: '#ef4444', roughness: 0.4 });
+  // 8. Add Finish Line Pillars and Checkered Banner
+  const pillarGeo = new THREE.CylinderGeometry(8, 8, 260, 16);
+  const pillarMat = new THREE.MeshStandardMaterial({ color: '#ef4444', roughness: 0.5 });
   
   const p1 = new THREE.Mesh(pillarGeo, pillarMat);
-  p1.position.set(COURSE_LENGTH, 175, -400);
+  p1.position.set(COURSE_LENGTH, 130, -RIVER_3D_HALF_WIDTH);
   p1.castShadow = true;
   scene.add(p1);
   finishPillars.push(p1);
 
   const p2 = new THREE.Mesh(pillarGeo, pillarMat);
-  p2.position.set(COURSE_LENGTH, 175, 400);
+  p2.position.set(COURSE_LENGTH, 130, RIVER_3D_HALF_WIDTH);
   p2.castShadow = true;
   scene.add(p2);
   finishPillars.push(p2);
 
-  // Checkered banner across the finish line
-  const bannerGeo = new THREE.BoxGeometry(15, 40, 800);
+  const bannerGeo = new THREE.BoxGeometry(10, 30, RIVER_3D_HALF_WIDTH * 2);
   const bannerMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.6 });
   const bannerMesh = new THREE.Mesh(bannerGeo, bannerMat);
-  bannerMesh.position.set(COURSE_LENGTH, 300, 0);
+  bannerMesh.position.set(COURSE_LENGTH, 230, 0);
   bannerMesh.castShadow = true;
   scene.add(bannerMesh);
 
-  // Checkered pattern
-  for (let cz = -390; cz <= 390; cz += 25) {
-    const boxGeo = new THREE.BoxGeometry(16, 41, 12);
-    const boxMat = new THREE.MeshBasicMaterial({ color: (Math.round((cz + 390) / 25) % 2 === 0) ? '#000000' : '#ffffff' });
+  for (let cz = -RIVER_3D_HALF_WIDTH + 10; cz <= RIVER_3D_HALF_WIDTH - 10; cz += 20) {
+    const boxGeo = new THREE.BoxGeometry(11, 31, 10);
+    const boxMat = new THREE.MeshBasicMaterial({ color: (Math.round((cz + 200) / 20) % 2 === 0) ? '#000000' : '#ffffff' });
     const checkMesh = new THREE.Mesh(boxGeo, boxMat);
-    checkMesh.position.set(COURSE_LENGTH, 300, cz);
+    checkMesh.position.set(COURSE_LENGTH, 230, cz);
     scene.add(checkMesh);
   }
-  
-  // Add "FINISH" text sign
-  const signGeo = new THREE.BoxGeometry(100, 50, 5);
-  const signMat = new THREE.MeshBasicMaterial({ color: '#ff3300' });
-  const signMesh = new THREE.Mesh(signGeo, signMat);
-  signMesh.position.set(COURSE_LENGTH, 380, 0);
-  scene.add(signMesh);
 
   // 9. Plant Forest of 3D Trees
   plant3DForest();
@@ -1357,7 +1345,7 @@ function plant3DForest() {
   for (let i = 0; i < treeCount; i++) {
     const x = (i / treeCount) * (COURSE_LENGTH + 1200) - 400;
     // Plant all trees on the top bank (background) for unobstructed side view
-    const z = -340 - Math.random() * 200;
+    const z = -240 - Math.random() * 120;
     const scale = 0.8 + Math.random() * 0.6;
 
     const tree = create3DTree(scale);
@@ -1417,126 +1405,121 @@ function create3DDuck(duckData) {
   const accessoryColor = duckData.accessoryColor || '#ffffff';
   const patternColor = duckData.patternColor || '#00e5ff';
 
-  const pattern = duckData.pattern || 'solid';
-  // Use pattern color for wing accent to make patterned ducks highly distinct!
-  const finalWingColor = pattern !== 'solid' ? patternColor : wingColor;
-
-  // 1. Torso/Body (Volumetric realistic duck body, slightly tilted upward)
+  // 1. Torso/Body (Volumetric yellow/colored sphere)
   const torsoGeo = new THREE.SphereGeometry(15, 16, 16);
-  torsoGeo.scale(1.6, 1.2, 1.4);
+  torsoGeo.scale(1.3, 1.0, 1.0);
   const torsoMat = new THREE.MeshStandardMaterial({ color: duckColor, roughness: 0.25, metalness: 0.1 });
   const torso = new THREE.Mesh(torsoGeo, torsoMat);
-  torso.position.set(-2, 9, 0);
-  torso.rotation.z = -Math.PI / 20; // Natural chest-up swimming tilt
+  torso.position.y = 8;
   torso.castShadow = true;
   torso.receiveShadow = true;
   duckGroup.add(torso);
 
   // 2. Neck
-  const neckGeo = new THREE.CylinderGeometry(6, 8, 14, 12);
+  const neckGeo = new THREE.CylinderGeometry(5, 7, 12, 12);
   const neck = new THREE.Mesh(neckGeo, torsoMat);
-  neck.position.set(12, 18, 0);
-  neck.rotation.z = -Math.PI / 6;
+  neck.position.set(10, 14, 0);
+  neck.rotation.z = -Math.PI / 8;
   neck.castShadow = true;
   neck.receiveShadow = true;
   duckGroup.add(neck);
 
   // 3. Head (Sphere with specular plastic highlight)
-  const headGeo = new THREE.SphereGeometry(11, 16, 16);
+  const headGeo = new THREE.SphereGeometry(9.5, 16, 16);
   const head = new THREE.Mesh(headGeo, torsoMat);
-  head.position.set(16, 26, 0);
+  head.position.set(14, 21, 0);
   head.castShadow = true;
   head.receiveShadow = true;
   duckGroup.add(head);
 
-  // 4. Tail (Flattened fan-like tail feathers)
-  const tailGeo = new THREE.ConeGeometry(6, 14, 8);
-  tailGeo.scale(1.6, 1.2, 0.6); // Thin side-to-side, wide front-to-back
+  // 4. Tail
+  const tailGeo = new THREE.ConeGeometry(5, 12, 8);
   const tail = new THREE.Mesh(tailGeo, torsoMat);
-  tail.position.set(-20, 13, 0);
+  tail.position.set(-16, 11, 0);
   tail.rotation.z = Math.PI / 3;
   tail.castShadow = true;
   tail.receiveShadow = true;
   duckGroup.add(tail);
 
   // 5. Beak/Bill (Cute organic rounded duck bill)
-  const beakGeo = new THREE.ConeGeometry(5, 12, 12);
+  const beakGeo = new THREE.ConeGeometry(4, 9, 12);
   beakGeo.rotateZ(-Math.PI / 2); // Point forward
-  beakGeo.scale(1.0, 0.7, 1.5); // Flatten to look like a bill!
+  beakGeo.scale(1.0, 0.6, 1.3); // Flatten to look like a bill!
   const beakMat = new THREE.MeshStandardMaterial({ color: beakColor, roughness: 0.3 });
   const beak = new THREE.Mesh(beakGeo, beakMat);
-  beak.position.set(26, 24, 0);
+  beak.position.set(22, 20, 0);
   beak.castShadow = true;
   duckGroup.add(beak);
 
   // 6. Eyes
-  const eyeGeo = new THREE.SphereGeometry(1.8, 8, 8);
-  eyeGeo.scale(1, 1, 0.5);
+  const eyeGeo = new THREE.SphereGeometry(1.5, 8, 8);
+  eyeGeo.scale(1, 1, 0.4);
   const eyeMat = new THREE.MeshBasicMaterial({ color: '#111111' });
   
   const eyeL = new THREE.Mesh(eyeGeo, eyeMat);
-  eyeL.position.set(20, 28, 6.5);
+  eyeL.position.set(18, 23, 5.5);
   duckGroup.add(eyeL);
 
   const eyeR = new THREE.Mesh(eyeGeo, eyeMat);
-  eyeR.position.set(20, 28, -6.5);
+  eyeR.position.set(18, 23, -5.5);
   duckGroup.add(eyeR);
 
   // Eye highlights
-  const sparkleGeo = new THREE.SphereGeometry(0.6, 8, 8);
+  const sparkleGeo = new THREE.SphereGeometry(0.5, 8, 8);
   const sparkleMat = new THREE.MeshBasicMaterial({ color: '#ffffff' });
   const sparkleL = new THREE.Mesh(sparkleGeo, sparkleMat);
-  sparkleL.position.set(21.2, 28.8, 6.7);
+  sparkleL.position.set(19.2, 23.8, 5.7);
   duckGroup.add(sparkleL);
 
   const sparkleR = new THREE.Mesh(sparkleGeo, sparkleMat);
-  sparkleR.position.set(21.2, 28.8, -6.7);
+  sparkleR.position.set(19.2, 23.8, -5.7);
   duckGroup.add(sparkleR);
 
   // 7. Wings
-  const wingGeo = new THREE.SphereGeometry(12, 8, 8);
-  wingGeo.scale(1.4, 0.8, 0.3);
-  const wingMat = new THREE.MeshStandardMaterial({ color: finalWingColor, roughness: 0.3 });
+  const wingGeo = new THREE.SphereGeometry(10, 8, 8);
+  wingGeo.scale(1.2, 0.7, 0.25);
+  const wingMat = new THREE.MeshStandardMaterial({ color: wingColor, roughness: 0.3 });
   
   const wingL = new THREE.Mesh(wingGeo, wingMat);
-  wingL.position.set(-2, 9, 14);
-  wingL.rotation.set(-Math.PI / 10, 0, Math.PI / 10);
+  wingL.position.set(-1, 9, 13);
+  wingL.rotation.set(-Math.PI / 12, 0, Math.PI / 12);
   wingL.castShadow = true;
   duckGroup.add(wingL);
 
   const wingR = new THREE.Mesh(wingGeo, wingMat);
-  wingR.position.set(-2, 9, -14);
-  wingR.rotation.set(Math.PI / 10, 0, -Math.PI / 10);
+  wingR.position.set(-1, 9, -13);
+  wingR.rotation.set(Math.PI / 12, 0, -Math.PI / 12);
   wingR.castShadow = true;
   duckGroup.add(wingR);
 
-  // 8. Feet (Orange webbed feet floating under the duck)
-  const footGeo = new THREE.BoxGeometry(12, 1.5, 10);
-  const footMat = new THREE.MeshStandardMaterial({ color: '#ff6600', roughness: 0.8 });
+  // 8. Swim Ring (Contrasting pattern color for high visibility)
+  const torusGeo = new THREE.TorusGeometry(18, 6, 12, 24);
+  torusGeo.rotateX(Math.PI / 2);
   
-  const footL = new THREE.Mesh(footGeo, footMat);
-  footL.position.set(6, -8, 13);
-  footL.rotation.y = Math.PI / 8;
-  duckGroup.add(footL);
-
-  const footR = new THREE.Mesh(footGeo, footMat);
-  footR.position.set(6, -8, -13);
-  footR.rotation.y = -Math.PI / 8;
-  duckGroup.add(footR);
+  const torusMat = new THREE.MeshStandardMaterial({
+    color: patternColor,
+    roughness: 0.15,
+    metalness: 0.15
+  });
+  const torus = new THREE.Mesh(torusGeo, torusMat);
+  torus.position.y = 5;
+  torus.castShadow = true;
+  torus.receiveShadow = true;
+  duckGroup.add(torus);
 
   // 9. Accessories
   if (accessory === 'captain_hat') {
     const hatGroup = new THREE.Group();
-    hatGroup.position.set(16, 35.5, 0);
+    hatGroup.position.set(14, 30.5, 0);
 
-    const domeGeo = new THREE.CylinderGeometry(8, 8, 6, 12);
+    const domeGeo = new THREE.CylinderGeometry(7, 7, 5, 12);
     const domeMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.5 });
     const dome = new THREE.Mesh(domeGeo, domeMat);
-    dome.position.y = 3;
+    dome.position.y = 2.5;
     dome.castShadow = true;
     hatGroup.add(dome);
 
-    const brimGeo = new THREE.BoxGeometry(18, 2, 14);
+    const brimGeo = new THREE.BoxGeometry(16, 1.5, 12);
     brimGeo.rotateY(Math.PI / 16);
     const brimMat = new THREE.MeshStandardMaterial({ color: '#1e3a8a', roughness: 0.3 });
     const brim = new THREE.Mesh(brimGeo, brimMat);
@@ -1546,70 +1529,68 @@ function create3DDuck(duckData) {
 
     duckGroup.add(hatGroup);
   }
-  else if (accessory === 'glasses' || accessory === 'sunglasses' || accessory === 'neon_sunglasses') {
+  else if (accessory === 'glasses' || accessory === 'sunglasses') {
     const glassesGroup = new THREE.Group();
-    glassesGroup.position.set(22, 28, 0);
+    glassesGroup.position.set(19, 23, 0);
 
-    const lensGeo = new THREE.CylinderGeometry(4.5, 4.5, 1, 12);
+    const lensGeo = new THREE.CylinderGeometry(3.5, 3.5, 0.8, 12);
     lensGeo.rotateX(Math.PI / 2);
-    const isDarkLens = (accessory === 'sunglasses' || accessory === 'neon_sunglasses');
     const lensMat = new THREE.MeshStandardMaterial({
-      color: isDarkLens ? '#111111' : '#a0d2eb',
+      color: accessory === 'sunglasses' ? '#111111' : '#a0d2eb',
       roughness: 0.1,
       metalness: 0.9,
       transparent: true,
-      opacity: isDarkLens ? 0.95 : 0.4
+      opacity: accessory === 'sunglasses' ? 0.95 : 0.4
     });
 
     const lL = new THREE.Mesh(lensGeo, lensMat);
-    lL.position.z = 5.5;
+    lL.position.z = 4.5;
     glassesGroup.add(lL);
 
     const lR = new THREE.Mesh(lensGeo, lensMat);
-    lR.position.z = -5.5;
+    lR.position.z = -4.5;
     glassesGroup.add(lR);
 
-    const frameGeo = new THREE.BoxGeometry(1.2, 1.2, 11);
-    const frameColor = accessory === 'neon_sunglasses' ? '#39ff14' : (accessoryColor || '#ffd700');
-    const frameMat = new THREE.MeshStandardMaterial({ color: frameColor, roughness: 0.2 });
+    const frameGeo = new THREE.BoxGeometry(1, 1, 9);
+    const frameMat = new THREE.MeshStandardMaterial({ color: accessoryColor, roughness: 0.2 });
     const frame = new THREE.Mesh(frameGeo, frameMat);
     glassesGroup.add(frame);
 
     duckGroup.add(glassesGroup);
   }
   else if (accessory === 'bandana') {
-    const bandanaGeo = new THREE.SphereGeometry(11.3, 12, 12, 0, Math.PI * 2, 0, Math.PI / 2);
+    const bandanaGeo = new THREE.SphereGeometry(9.8, 12, 12, 0, Math.PI * 2, 0, Math.PI / 2);
     const bandanaMat = new THREE.MeshStandardMaterial({ color: accessoryColor, roughness: 0.7 });
     const bandana = new THREE.Mesh(bandanaGeo, bandanaMat);
-    bandana.position.set(16, 26.5, 0);
+    bandana.position.set(14, 21.5, 0);
     bandana.castShadow = true;
     duckGroup.add(bandana);
   }
   else if (accessory === 'mohawk') {
-    const mohawkGeo = new THREE.BoxGeometry(16, 12, 2.5);
+    const mohawkGeo = new THREE.BoxGeometry(14, 10, 2);
     const mohawkMat = new THREE.MeshStandardMaterial({ color: accessoryColor, roughness: 0.6 });
     const mohawk = new THREE.Mesh(mohawkGeo, mohawkMat);
-    mohawk.position.set(12, 38, 0);
+    mohawk.position.set(10, 31, 0);
     mohawk.castShadow = true;
     duckGroup.add(mohawk);
   }
-  else if (accessory === 'top_hat' || accessory === 'gentleman_hat') {
+  else if (accessory === 'top_hat') {
     const hatGroup = new THREE.Group();
-    hatGroup.position.set(16, 36.5, 0);
+    hatGroup.position.set(14, 30.5, 0);
 
-    const brimGeo = new THREE.CylinderGeometry(13, 13, 1.2, 12);
+    const brimGeo = new THREE.CylinderGeometry(11, 11, 1, 12);
     const brimMat = new THREE.MeshStandardMaterial({ color: '#1e293b', roughness: 0.7 });
     const brim = new THREE.Mesh(brimGeo, brimMat);
     brim.castShadow = true;
     hatGroup.add(brim);
 
-    const cylinderGeo = new THREE.CylinderGeometry(8, 8, 16, 12);
+    const cylinderGeo = new THREE.CylinderGeometry(7, 7, 14, 12);
     const cylinder = new THREE.Mesh(cylinderGeo, brimMat);
-    cylinder.position.y = 8;
+    cylinder.position.y = 7;
     cylinder.castShadow = true;
     hatGroup.add(cylinder);
 
-    const ribbonGeo = new THREE.CylinderGeometry(8.2, 8.2, 3, 12);
+    const ribbonGeo = new THREE.CylinderGeometry(7.2, 7.2, 2.5, 12);
     const ribbonMat = new THREE.MeshStandardMaterial({ color: accessoryColor, roughness: 0.5 });
     const ribbon = new THREE.Mesh(ribbonGeo, ribbonMat);
     ribbon.position.y = 1.5;
@@ -1618,114 +1599,40 @@ function create3DDuck(duckData) {
     duckGroup.add(hatGroup);
   }
   else if (accessory === 'party_hat') {
-    const coneGeo = new THREE.ConeGeometry(6.5, 20, 12);
+    const coneGeo = new THREE.ConeGeometry(5.5, 18, 12);
     const coneMat = new THREE.MeshStandardMaterial({ color: accessoryColor, roughness: 0.5 });
     const cone = new THREE.Mesh(coneGeo, coneMat);
-    cone.position.set(16, 36, 0);
+    cone.position.set(14, 30, 0);
     cone.castShadow = true;
     duckGroup.add(cone);
 
-    const pomGeo = new THREE.SphereGeometry(2.2, 8, 8);
+    const pomGeo = new THREE.SphereGeometry(1.8, 8, 8);
     const pomMat = new THREE.MeshBasicMaterial({ color: '#ffd700' });
     const pom = new THREE.Mesh(pomGeo, pomMat);
-    pom.position.set(16, 46, 0);
+    pom.position.set(14, 39, 0);
     duckGroup.add(pom);
   }
   else if (accessory === 'headphones') {
     const hpGroup = new THREE.Group();
-    hpGroup.position.set(16, 26, 0);
+    hpGroup.position.set(14, 21, 0);
 
-    const bandGeo = new THREE.TorusGeometry(12, 1.8, 8, 24, Math.PI);
+    const bandGeo = new THREE.TorusGeometry(11, 1.5, 8, 24, Math.PI);
     bandGeo.rotateZ(Math.PI / 2);
     const hpMat = new THREE.MeshStandardMaterial({ color: accessoryColor, roughness: 0.3 });
     const band = new THREE.Mesh(bandGeo, hpMat);
     hpGroup.add(band);
 
-    const cupGeo = new THREE.CylinderGeometry(4, 4, 3.5, 12);
+    const cupGeo = new THREE.CylinderGeometry(3.5, 3.5, 3, 12);
     cupGeo.rotateX(Math.PI / 2);
     const cupL = new THREE.Mesh(cupGeo, hpMat);
-    cupL.position.z = 12.5;
+    cupL.position.z = 10.5;
     hpGroup.add(cupL);
 
     const cupR = new THREE.Mesh(cupGeo, hpMat);
-    cupR.position.z = -12.5;
+    cupR.position.z = -10.5;
     hpGroup.add(cupR);
 
     duckGroup.add(hpGroup);
-  }
-  else if (accessory === 'pirate_patch') {
-    // Slanted strap around head
-    const strapMat = new THREE.MeshBasicMaterial({ color: '#111111' });
-    const strapGeo = new THREE.TorusGeometry(11.2, 0.6, 8, 24);
-    strapGeo.rotateX(Math.PI / 2);
-    strapGeo.rotateZ(Math.PI / 6);
-    const strap = new THREE.Mesh(strapGeo, strapMat);
-    strap.position.set(16, 27.5, 0);
-    duckGroup.add(strap);
-    // Eyepatch disk on the left side eye (facing screen side profile)
-    const patchGeo = new THREE.CylinderGeometry(2.5, 2.5, 1, 12);
-    patchGeo.rotateX(Math.PI / 2);
-    const patch = new THREE.Mesh(patchGeo, strapMat);
-    patch.position.set(20.4, 28, 6.7);
-    duckGroup.add(patch);
-  }
-  else if (accessory === 'unicorn_horn') {
-    const hornGeo = new THREE.ConeGeometry(1.8, 12, 10);
-    hornGeo.rotateZ(-Math.PI / 4); // Points forward/up
-    const hornMat = new THREE.MeshStandardMaterial({ color: '#ffd700', metalness: 0.8, roughness: 0.2 });
-    const horn = new THREE.Mesh(hornGeo, hornMat);
-    horn.position.set(24, 34, 0);
-    duckGroup.add(horn);
-  }
-  else if (accessory === 'hero_mask') {
-    const maskGroup = new THREE.Group();
-    maskGroup.position.set(20.5, 28, 0);
-    const maskMat = new THREE.MeshStandardMaterial({ color: accessoryColor || '#ef4444', roughness: 0.5 });
-    // Thin box overlaying eye height
-    const plateGeo = new THREE.BoxGeometry(1.2, 5.5, 14.5);
-    const plate = new THREE.Mesh(plateGeo, maskMat);
-    maskGroup.add(plate);
-    duckGroup.add(maskGroup);
-  }
-  else if (accessory === 'diver_goggles') {
-    // black frame
-    const frameGeo = new THREE.BoxGeometry(2, 6, 14);
-    const frameMat = new THREE.MeshStandardMaterial({ color: '#222222', roughness: 0.5 });
-    const visorFrame = new THREE.Mesh(frameGeo, frameMat);
-    visorFrame.position.set(21.5, 27.8, 0);
-    duckGroup.add(visorFrame);
-    // blue transparent glass
-    const glassGeo = new THREE.BoxGeometry(0.5, 4.5, 12.5);
-    const glassMat = new THREE.MeshStandardMaterial({
-      color: '#00e5ff',
-      roughness: 0.1,
-      metalness: 0.9,
-      transparent: true,
-      opacity: 0.6
-    });
-    const glass = new THREE.Mesh(glassGeo, glassMat);
-    glass.position.set(22.6, 27.8, 0);
-    duckGroup.add(glass);
-  }
-  else if (accessory === 'gold_laurel') {
-    const laurelGroup = new THREE.Group();
-    laurelGroup.position.set(16, 33.5, 0);
-    laurelGroup.rotation.x = Math.PI / 2;
-
-    const ringGeo = new THREE.TorusGeometry(8.5, 0.8, 8, 24);
-    const laurelMat = new THREE.MeshStandardMaterial({ color: '#ffd700', metalness: 0.8, roughness: 0.2 });
-    const ring = new THREE.Mesh(ringGeo, laurelMat);
-    laurelGroup.add(ring);
-
-    for (let a = 0; a < Math.PI * 2; a += Math.PI / 6) {
-      const leafGeo = new THREE.SphereGeometry(1.2, 6, 6);
-      leafGeo.scale(1.8, 0.8, 0.5);
-      const leaf = new THREE.Mesh(leafGeo, laurelMat);
-      leaf.position.set(Math.cos(a) * 8.5, Math.sin(a) * 8.5, 0);
-      leaf.rotation.z = a + Math.PI / 2;
-      laurelGroup.add(leaf);
-    }
-    duckGroup.add(laurelGroup);
   }
 
   duckGroup.userData = {
@@ -1746,47 +1653,39 @@ function create3DDuckTag(duckGroup, name, accessory) {
   if (!name) return;
 
   const textCanvas = document.createElement('canvas');
-  textCanvas.width = 128;
-  textCanvas.height = 32;
+  textCanvas.width = 256;
+  textCanvas.height = 72;
   const tCtx = textCanvas.getContext('2d');
   
-  tCtx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+  tCtx.fillStyle = 'rgba(255, 255, 255, 0.98)';
   tCtx.strokeStyle = '#000000';
-  tCtx.lineWidth = 2;
+  tCtx.lineWidth = 5;
   
   tCtx.beginPath();
-  tCtx.roundRect(4, 4, 120, 24, 10);
+  tCtx.roundRect(8, 8, 240, 56, 18);
   tCtx.fill();
   tCtx.stroke();
 
   tCtx.fillStyle = '#000000';
-  tCtx.font = 'bold 16px "Outfit", "Inter", sans-serif';
+  tCtx.font = '900 34px "Outfit", "Inter", sans-serif';
   tCtx.textAlign = 'center';
   tCtx.textBaseline = 'middle';
-  tCtx.fillText(name, 64, 16);
+  tCtx.fillText(name, 128, 38);
 
   const texture = new THREE.CanvasTexture(textCanvas);
+  texture.anisotropy = renderer ? renderer.capabilities.getMaxAnisotropy() : 1;
   const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true });
   const sprite = new THREE.Sprite(spriteMat);
   
-  let tagY = 38;
-  if (accessory === 'party_hat') tagY = 50;
-  else if (accessory === 'top_hat' || accessory === 'mohawk' || accessory === 'captain_hat') tagY = 46;
-  else if (accessory !== 'none') tagY = 42;
+  let tagY = 32;
+  if (accessory === 'party_hat') tagY = 42;
+  else if (accessory === 'top_hat' || accessory === 'mohawk' || accessory === 'captain_hat') tagY = 38;
+  else if (accessory !== 'none') tagY = 35;
   
-  sprite.position.set(16, tagY, 0);
-  sprite.scale.set(45, 12, 1);
+  sprite.position.set(14, tagY + 4, 0);
+  sprite.scale.set(58, 16, 1);
   sprite.name = 'tag';
   duckGroup.add(sprite);
-}
-
-function clear3DDucks() {
-  if (typeof scene !== 'undefined' && duck3DGroups) {
-    Object.keys(duck3DGroups).forEach(id => {
-      scene.remove(duck3DGroups[id]);
-    });
-    duck3DGroups = {};
-  }
 }
 
 function render3D() {
@@ -1811,7 +1710,7 @@ function render3D() {
     const group = duck3DGroups[d.id];
     if (!group) return;
 
-    const targetZ = d.y - 425;
+    const targetZ = mapCanvasYTo3DZ(d.y);
     
     group.position.x = d.x;
     group.position.z = targetZ;
@@ -1853,52 +1752,34 @@ function render3D() {
     }
   });
 
-  // Find the leading duck (the one furthest ahead that hasn't finished)
-  let leadingDuckX = 0;
-  let trailingDuckX = Infinity;
-  let activeDuckCount3D = 0;
-  
-  ducks.forEach(d => {
-    if (d.rank === null) {
-      if (d.x > leadingDuckX) leadingDuckX = d.x;
-      if (d.x < trailingDuckX) trailingDuckX = d.x;
-      activeDuckCount3D++;
-    }
-  });
-  
-  if (leadingDuckX === 0) leadingDuckX = 200; // Default to start position
-  if (trailingDuckX === Infinity) trailingDuckX = leadingDuckX;
-  
-  // Calculate spread to determine camera zoom
-  const duckSpread3D = leadingDuckX - trailingDuckX;
-  
-  // Camera follows the LEADING duck, positioned to see all ducks behind
-  // The further the spread, the further back the camera goes
-  const targetCamX3D = Math.max(0, Math.min(
-    COURSE_LENGTH - 100,
-    leadingDuckX - 200  // Camera stays 200px behind the leader
-  ));
+  const numDucks = ducks.length;
+  // Calculate dynamic scale factor based on number of ducks (supporting 2 to 30)
+  const tScale = Math.max(0, Math.min(1, (numDucks - 2) / 28)); // 0 for 2 ducks, 1 for 30 ducks
+  const racingDucks = ducks.filter(d => d.rank === null);
+  const focusDucks = racingDucks.length ? racingDucks : ducks;
+  const avgLaneZ = focusDucks.length
+    ? focusDucks.reduce((sum, d) => sum + mapCanvasYTo3DZ(d.y), 0) / focusDucks.length
+    : 0;
+  const targetCamY = 275 + tScale * 155;
+  const targetCamZ = 520 + tScale * 235;
 
-  // Dynamic camera height and distance based on duck spread
-  const spreadFactor3D = Math.min(1, duckSpread3D / 600);
-  const targetCamY = 350 + spreadFactor3D * 80;   // 350 to 430
-  const targetCamZ = 650 + spreadFactor3D * 150;  // 650 to 800
-
-  // FAST camera follow - must keep up with ducks!
-  const camera3DSpeed = 0.12;
-  camera.position.x += (targetCamX3D - camera.position.x) * camera3DSpeed;
-  camera.position.y += (targetCamY - camera.position.y) * camera3DSpeed;
-  camera.position.z += (targetCamZ - camera.position.z) * camera3DSpeed;
-  
-  // Look at the leading duck and slightly ahead
-  const lookAtX3D = Math.min(leadingDuckX + 100, COURSE_LENGTH + 50);
-  camera.lookAt(new THREE.Vector3(lookAtX3D, 20, 0));
+  camera.position.x += (cameraX - camera.position.x) * 0.48;
+  camera.position.y += (targetCamY - camera.position.y) * 0.12;
+  camera.position.z += (targetCamZ - camera.position.z) * 0.12;
+  camera.lookAt(new THREE.Vector3(camera.position.x + 190, 35, avgLaneZ * 0.14));
 
   if (sunLight) {
     sunLight.position.x = camera.position.x + 300;
   }
 
   renderer.render(scene, camera);
+}
+
+function mapCanvasYTo3DZ(y) {
+  const usableTop = RIVER_TOP + RIVER_PADDING;
+  const usableBottom = RIVER_BOTTOM - RIVER_PADDING;
+  const normalized = (y - usableTop) / Math.max(1, usableBottom - usableTop);
+  return -RIVER_3D_HALF_WIDTH + Math.max(0, Math.min(1, normalized)) * RIVER_3D_HALF_WIDTH * 2;
 }
 
 function render2D() {
@@ -1997,7 +1878,7 @@ function drawBackgroundParallax() {
 
   // 4. Grass bank (vibrant light green)
   ctx.fillStyle = '#4cd137'; // vibrant green
-  ctx.fillRect(cameraX, 150, VIEW_WIDTH, 120);
+  ctx.fillRect(cameraX, 150, VIEW_WIDTH, RIVER_TOP - 150 - 14);
 
   // 5. Green bushes along the grass bank
   ctx.fillStyle = '#44bd32'; // darker green for bushes
@@ -2029,21 +1910,21 @@ function drawBackgroundParallax() {
 
   // 7. Brown River bank (dirt shore line)
   ctx.fillStyle = '#8c5638'; // brown dirt color
-  ctx.fillRect(cameraX, 270, VIEW_WIDTH, 15);
+  ctx.fillRect(cameraX, RIVER_TOP - 15, VIEW_WIDTH, 15);
 
   // 8. Water area (ocean blue)
   ctx.fillStyle = '#00a8ff'; // vibrant water blue
-  ctx.fillRect(cameraX, 285, VIEW_WIDTH, VIEW_HEIGHT - 285);
+  ctx.fillRect(cameraX, RIVER_TOP, VIEW_WIDTH, RIVER_BOTTOM - RIVER_TOP);
   
   // 9. Straight Checkered starting line at X = 80
   const N = 26; // number of checkered segments
-  const segHeight = 260 / N;
+  const segHeight = (RIVER_BOTTOM - RIVER_TOP) / N;
   const lineW = 10; // width of each checkered block
   for (let i = 0; i < N; i++) {
-    const y1 = 285 + i * segHeight;
+    const y1 = RIVER_TOP + i * segHeight;
     const y2 = y1 + segHeight;
-    const x1 = 80;
-    const x2 = 80;
+    const x1 = START_LINE_X;
+    const x2 = START_LINE_X;
     
     // Segment 1 (left half of checkered line)
     ctx.fillStyle = (i % 2 === 0) ? '#ffffff' : '#000000';
@@ -2072,44 +1953,34 @@ function drawBackgroundParallax() {
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
   ducks.forEach((d, idx) => {
-    const startX = 80;
+    const startX = START_LINE_X;
     ctx.fillText(`${idx + 1}`, startX - 35, d.baseY + 5);
   });
 }
 
 function drawFinishLine() {
   const lineX = COURSE_LENGTH;
-  const stripeWidth = 20;
+  const stripeWidth = 15;
 
   ctx.save();
-  
-  // Main finish line - white background
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(lineX, 280, 50, VIEW_HEIGHT - 280);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(lineX, RIVER_TOP, 40, RIVER_BOTTOM - RIVER_TOP);
 
-  // Checkered pattern
-  ctx.fillStyle = '#000000';
-  for (let y = 280; y < VIEW_HEIGHT; y += stripeWidth * 2) {
+  ctx.fillStyle = '#000';
+  for (let y = RIVER_TOP; y < RIVER_BOTTOM; y += stripeWidth * 2) {
     ctx.fillRect(lineX, y, stripeWidth, stripeWidth);
     ctx.fillRect(lineX + stripeWidth, y + stripeWidth, stripeWidth, stripeWidth);
   }
 
-  // Finish line pole
   ctx.fillStyle = '#e5e7eb';
-  ctx.fillRect(lineX + 20, 40, 12, VIEW_HEIGHT - 40);
+  ctx.fillRect(lineX + 15, 60, 10, VIEW_HEIGHT - 60);
 
-  // FINISH sign - bigger and more visible
   ctx.fillStyle = '#ff3300';
-  ctx.fillRect(lineX - 50, 30, 150, 45);
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 3;
-  ctx.strokeRect(lineX - 50, 30, 150, 45);
-  
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 24px "Outfit", sans-serif';
+  ctx.font = 'bold 16px "Outfit", sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('🏁 FINISH', lineX + 25, 60);
-  
+  ctx.fillRect(lineX - 40, 60, 120, 32);
+  ctx.fillStyle = '#fff';
+  ctx.fillText('FINISH', lineX + 20, 82);
   ctx.restore();
 }
 
@@ -2127,7 +1998,7 @@ function drawWaterRippleDetails() {
     ctx.lineDashOffset = flowOffset;
     const dividerY = d.y - (d.y - ducks[idx - 1].y) / 2;
     ctx.moveTo(0, dividerY);
-    ctx.lineTo(COURSE_LENGTH + 200, dividerY);
+    ctx.lineTo(COURSE_LENGTH + 260, dividerY);
     ctx.stroke();
   });
   ctx.setLineDash([]);
@@ -2138,7 +2009,7 @@ function drawWaterRippleDetails() {
   const flowT = Date.now() * 0.0015;
   
   for (let i = 0; i < 15; i++) {
-    const waveY = 295 + (i * 18);
+    const waveY = RIVER_TOP + 12 + (i * ((RIVER_BOTTOM - RIVER_TOP - 24) / 14));
     ctx.beginPath();
     // Draw a long flowing wave curve
     for (let x = cameraX; x < cameraX + VIEW_WIDTH + 100; x += 40) {
@@ -2164,7 +2035,7 @@ function drawWaterRippleDetails() {
     let wx = (startX - (t * 50 * flowSpeed)) % (COURSE_LENGTH + 400);
     if (wx < -50) wx += (COURSE_LENGTH + 400);
     
-    let wy = 295 + Math.abs(Math.cos(i * 987.654)) * (VIEW_HEIGHT - 315);
+    let wy = RIVER_TOP + 10 + Math.abs(Math.cos(i * 987.654)) * (RIVER_BOTTOM - RIVER_TOP - 20);
     
     ctx.beginPath();
     ctx.arc(wx, wy, 2 + Math.abs(seed) * 3, 0, Math.PI * 2);
@@ -2200,46 +2071,48 @@ function drawDuck(ctx, x, y, size, name, color, styleIndex, bobbingOffset, rank,
   ctx.ellipse(0, 16, 26, 6, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // 2. Orange feet under the duck body
+  // 1.5 Swimming Water Wake (drawn behind/under the duck body)
   ctx.save();
-  ctx.fillStyle = '#ff6600';
-  ctx.strokeStyle = '#000';
-  ctx.lineWidth = 1.8;
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.38)';
+  ctx.lineWidth = 2.2;
+  const t = Date.now() * 0.015 + x * 0.05;
+  const waveAmp = 6 + Math.sin(t) * 3.5;
   
-  // Left foot
+  // V-shape trail extending behind the duck
   ctx.beginPath();
-  ctx.ellipse(-2, 13.5, 6, 3, Math.PI / 8, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.moveTo(-24, 6);
+  ctx.quadraticCurveTo(-45, 6 - waveAmp, -75, 4 - waveAmp * 1.8);
+  ctx.moveTo(-24, 6);
+  ctx.quadraticCurveTo(-45, 6 + waveAmp, -75, 8 + waveAmp * 1.8);
   ctx.stroke();
   
-  // Right foot
-  ctx.beginPath();
-  ctx.ellipse(6, 12.5, 6, 3, -Math.PI / 8, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
+  // Little bubbles/particles trailing behind
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+  for (let i = 0; i < 3; i++) {
+    const bx = -35 - (i * 12) - (t * 2 % 10);
+    const by = 6 + Math.sin(t + i) * 3;
+    ctx.beginPath();
+    ctx.arc(bx, by, 1.5 + (i % 2), 0, Math.PI * 2);
+    ctx.fill();
+  }
   ctx.restore();
 
-  // 3. Duck Torso/Body (Swimming directly in the water!)
+  // 2. Swim Ring Body (outer ellipse with volumetric 3D radial gradient shading)
+  let ringGrad = ctx.createRadialGradient(-6, 0, 4, 0, 4, 26);
+  ringGrad.addColorStop(0, adjustBrightness(duckColor, 35)); // Highlight specular reflection
+  ringGrad.addColorStop(0.35, duckColor); // Base color
+  ringGrad.addColorStop(1, adjustBrightness(duckColor, -42)); // 3D shadow depth
+
+  ctx.fillStyle = ringGrad;
   ctx.beginPath();
-  ctx.moveTo(-10, -3);
-  ctx.quadraticCurveTo(-18, -10, -22, -6); // upturned tail point
-  ctx.quadraticCurveTo(-23, 0, -12, 5);    // back under-tail curve
-  ctx.quadraticCurveTo(-2, 11, 8, 8);      // belly/bottom
-  ctx.quadraticCurveTo(15, 3, 11, -4);     // chest curve
-  ctx.quadraticCurveTo(3, -6, -10, -3);    // back line
-  ctx.closePath();
-  
-  let bodyGrad = ctx.createRadialGradient(2, -2, 3, 2, -2, 18);
-  bodyGrad.addColorStop(0, '#ffffff'); // bright light highlight
-  bodyGrad.addColorStop(0.18, adjustBrightness(duckColor, 35));
-  bodyGrad.addColorStop(0.55, duckColor);
-  bodyGrad.addColorStop(1, adjustBrightness(duckColor, -35));
-  ctx.fillStyle = bodyGrad;
+  ctx.ellipse(0, 4, 24, 14, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Render patterns inside the duck torso (as realistic feather patterns)
+  // Render patterns inside swim ring
   if (pattern === 'stripes') {
     ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(0, 4, 24, 14, 0, 0, Math.PI * 2);
     ctx.clip();
     ctx.fillStyle = patternColor;
     for (let sx = -40; sx < 40; sx += 12) {
@@ -2248,6 +2121,8 @@ function drawDuck(ctx, x, y, size, name, color, styleIndex, bobbingOffset, rank,
     ctx.restore();
   } else if (pattern === 'zigzag') {
     ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(0, 4, 24, 14, 0, 0, Math.PI * 2);
     ctx.clip();
     ctx.strokeStyle = patternColor;
     ctx.lineWidth = 4;
@@ -2263,11 +2138,13 @@ function drawDuck(ctx, x, y, size, name, color, styleIndex, bobbingOffset, rank,
     ctx.restore();
   } else if (pattern === 'polka_dots') {
     ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(0, 4, 24, 14, 0, 0, Math.PI * 2);
     ctx.clip();
     ctx.fillStyle = patternColor;
     const dots = [
       {x: -12, y: -2}, {x: 0, y: -4}, {x: 12, y: 0},
-      {x: -6, y: 4}, {x: 6, y: 4}, {x: -18, y: 2}
+      {x: -8, y: 10}, {x: 4, y: 8}, {x: -2, y: 3}, {x: 10, y: 12}
     ];
     dots.forEach(p => {
       ctx.beginPath();
@@ -2277,7 +2154,53 @@ function drawDuck(ctx, x, y, size, name, color, styleIndex, bobbingOffset, rank,
     ctx.restore();
   }
 
+  // Stroke Swim Ring Body
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.ellipse(0, 4, 24, 14, 0, 0, Math.PI * 2);
+  ctx.stroke();
 
+  // Glossy Specular Highlight on Swim Ring (gives it a high-end plastic reflection)
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
+  ctx.lineWidth = 3.0;
+  ctx.beginPath();
+  ctx.arc(-8, -1, 13, Math.PI * 1.05, Math.PI * 1.55);
+  ctx.stroke();
+
+  // 3. Inner Hole of Swim Ring (representing 3D depth)
+  let holeGrad = ctx.createLinearGradient(0, 0, 0, 8);
+  holeGrad.addColorStop(0, '#004488'); // Darkest shadow at top edge of hole
+  holeGrad.addColorStop(1, '#0088cc'); // Lighter water highlight
+  
+  ctx.fillStyle = holeGrad;
+  ctx.beginPath();
+  ctx.ellipse(0, 4, 11, 6, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 2.0;
+  ctx.stroke();
+
+  // 4. Chubby Duck Torso/Body (sitting inside the swim ring!)
+  ctx.beginPath();
+  ctx.moveTo(-10, -3);
+  ctx.quadraticCurveTo(-18, -10, -22, -6); // upturned tail point
+  ctx.quadraticCurveTo(-23, 0, -12, 5);    // back under-tail curve
+  ctx.quadraticCurveTo(-2, 10, 8, 7);      // belly/bottom
+  ctx.quadraticCurveTo(15, 3, 11, -4);     // chest curve
+  ctx.quadraticCurveTo(3, -6, -10, -3);    // back line
+  ctx.closePath();
+  
+  let bodyGrad = ctx.createRadialGradient(2, -2, 3, 2, -2, 18);
+  bodyGrad.addColorStop(0, '#ffffff'); // bright light highlight
+  bodyGrad.addColorStop(0.18, adjustBrightness(duckColor, 35));
+  bodyGrad.addColorStop(0.55, duckColor);
+  bodyGrad.addColorStop(1, adjustBrightness(duckColor, -35));
+  ctx.fillStyle = bodyGrad;
+  ctx.fill();
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 2.2;
+  ctx.stroke();
 
   // 5. Duck Neck & Head (drawn rising from the body torso)
   ctx.beginPath();
@@ -2405,9 +2328,9 @@ function drawDuck(ctx, x, y, size, name, color, styleIndex, bobbingOffset, rank,
     ctx.lineTo(-3, -2);
     ctx.stroke();
   }
-  else if (accessory === 'sunglasses' || accessory === 'neon_sunglasses') {
+  else if (accessory === 'sunglasses') {
     ctx.fillStyle = '#111';
-    ctx.strokeStyle = accessory === 'neon_sunglasses' ? '#39ff14' : (accessoryColor || '#ffd700');
+    ctx.strokeStyle = accessoryColor || '#ffd700';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.ellipse(6, -4, 6, 4, Math.PI / 12, 0, Math.PI * 2);
@@ -2469,7 +2392,7 @@ function drawDuck(ctx, x, y, size, name, color, styleIndex, bobbingOffset, rank,
     ctx.lineWidth = 1.5;
     ctx.stroke();
   }
-  else if (accessory === 'top_hat' || accessory === 'gentleman_hat') {
+  else if (accessory === 'top_hat') {
     ctx.strokeStyle = '#000';
     ctx.lineWidth = 2.5;
     ctx.beginPath();
@@ -2524,83 +2447,6 @@ function drawDuck(ctx, x, y, size, name, color, styleIndex, bobbingOffset, rank,
     ctx.arc(14, 1, 3.5, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
-  }
-  else if (accessory === 'pirate_patch') {
-    ctx.fillStyle = '#222222';
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 1.5;
-    // Strap
-    ctx.beginPath();
-    ctx.moveTo(-8, -8);
-    ctx.lineTo(10, -1);
-    ctx.stroke();
-    // Patch
-    ctx.beginPath();
-    ctx.ellipse(5, -4, 4.5, 4.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-  }
-  else if (accessory === 'unicorn_horn') {
-    ctx.fillStyle = '#ffd700';
-    ctx.strokeStyle = '#b89200';
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.moveTo(2, -10);
-    ctx.lineTo(12, -26);
-    ctx.lineTo(7, -8);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-  }
-  else if (accessory === 'hero_mask') {
-    ctx.fillStyle = accessoryColor || '#ef4444';
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.ellipse(4, -4.5, 7.5, 4.5, Math.PI / 12, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    // Eye cutout
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.ellipse(4.5, -4.5, 2.5, 2.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#111111';
-    ctx.beginPath();
-    ctx.arc(4.5, -4.5, 1.2, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  else if (accessory === 'diver_goggles') {
-    ctx.strokeStyle = '#333333';
-    ctx.lineWidth = 2.0;
-    // Strap
-    ctx.beginPath();
-    ctx.moveTo(-8, -4);
-    ctx.lineTo(4, -4);
-    ctx.stroke();
-    // Visor glass
-    ctx.fillStyle = 'rgba(0, 229, 255, 0.45)';
-    ctx.beginPath();
-    ctx.ellipse(5, -4, 7, 5, Math.PI / 12, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-  }
-  else if (accessory === 'gold_laurel') {
-    ctx.strokeStyle = '#ffd700';
-    ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    ctx.arc(0, -9, 8, Math.PI * 1.05, Math.PI * 1.95);
-    ctx.stroke();
-    // Leaves
-    ctx.fillStyle = '#ffd700';
-    const leafAngles = [Math.PI * 1.15, Math.PI * 1.35, Math.PI * 1.5, Math.PI * 1.65, Math.PI * 1.85];
-    leafAngles.forEach(ang => {
-      const lx = Math.cos(ang) * 8;
-      const ly = -9 + Math.sin(ang) * 8;
-      ctx.beginPath();
-      ctx.ellipse(lx, ly, 2.5, 1.5, ang + Math.PI/4, 0, Math.PI * 2);
-      ctx.fill();
-    });
   }
   ctx.restore();
 

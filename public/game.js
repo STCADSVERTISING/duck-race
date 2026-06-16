@@ -37,6 +37,7 @@ const RIVER_PADDING = 30;
 const START_LINE_X = 90;
 const RIVER_3D_HALF_WIDTH = 310;
 const CAMERA_FOLLOW_SPEED = 0.38;
+const FINISH_RUNWAY = 560;
 
 // Local State
 let ducks = [];
@@ -1074,8 +1075,8 @@ function updatePhysics() {
     const distance = endX - startX;
     let targetX = startX + d.progress * distance;
 
-    // Exciting staggered column parking past the finish line (strictly on-screen between 2820px and 2895px)
-    const restX = COURSE_LENGTH + 20 + (ducks.length - d.targetRank) * 7;
+    // Let each duck glide through the line before easing into a natural post-finish coast.
+    const restX = COURSE_LENGTH + 150 + (ducks.length - d.targetRank) * 12;
     if (targetX > restX) {
       targetX = restX;
     }
@@ -1087,9 +1088,9 @@ function updatePhysics() {
     let dx = targetX - d.x;
     
     // Faster pursuit makes the race feel physical and keeps the camera from outrunning the field.
-    let easeFactor = 0.22;
+    let easeFactor = 0.2;
     if (duckProgress >= 1.0) {
-      easeFactor = 0.35;
+      easeFactor = 0.2;
     }
     
     d.x += dx * easeFactor;
@@ -1134,8 +1135,13 @@ function updateRaceCamera() {
   const packSpeed = leadPack.reduce((sum, d) => sum + Math.max(0, d.speed || 0), 0) / leadPack.length;
   const focusX = Math.max(packCenterX, leaderX - 30);
   const lookAhead = Math.min(300, 130 + packSpeed * 10);
-  const maxCameraX = Math.max(0, COURSE_LENGTH - VIEW_WIDTH + 260);
-  const targetCamX = Math.max(0, Math.min(maxCameraX, focusX + lookAhead - VIEW_WIDTH * 0.34));
+  const maxCameraX = Math.max(0, COURSE_LENGTH + FINISH_RUNWAY - VIEW_WIDTH);
+  const desiredCamX = focusX + lookAhead - VIEW_WIDTH * 0.48;
+  const headPackBackX = Math.min(...leadPack.map(d => d.x));
+  const minCamForLeader = leaderX - VIEW_WIDTH * 0.82;
+  const maxCamForHeadPack = headPackBackX - VIEW_WIDTH * 0.18;
+  const framedCamX = Math.max(minCamForLeader, Math.min(desiredCamX, maxCamForHeadPack));
+  const targetCamX = Math.max(0, Math.min(maxCameraX, framedCamX));
   const distance = Math.abs(targetCamX - cameraX);
   const followSpeed = distance > 180 ? 0.58 : CAMERA_FOLLOW_SPEED;
   cameraX += (targetCamX - cameraX) * followSpeed;
@@ -1627,26 +1633,27 @@ function create3DDuckTag(duckGroup, name, accessory) {
   if (!name) return;
 
   const textCanvas = document.createElement('canvas');
-  textCanvas.width = 128;
-  textCanvas.height = 32;
+  textCanvas.width = 256;
+  textCanvas.height = 72;
   const tCtx = textCanvas.getContext('2d');
   
-  tCtx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+  tCtx.fillStyle = 'rgba(255, 255, 255, 0.98)';
   tCtx.strokeStyle = '#000000';
-  tCtx.lineWidth = 2;
+  tCtx.lineWidth = 5;
   
   tCtx.beginPath();
-  tCtx.roundRect(4, 4, 120, 24, 10);
+  tCtx.roundRect(8, 8, 240, 56, 18);
   tCtx.fill();
   tCtx.stroke();
 
   tCtx.fillStyle = '#000000';
-  tCtx.font = 'bold 16px "Outfit", "Inter", sans-serif';
+  tCtx.font = '900 34px "Outfit", "Inter", sans-serif';
   tCtx.textAlign = 'center';
   tCtx.textBaseline = 'middle';
-  tCtx.fillText(name, 64, 16);
+  tCtx.fillText(name, 128, 38);
 
   const texture = new THREE.CanvasTexture(textCanvas);
+  texture.anisotropy = renderer ? renderer.capabilities.getMaxAnisotropy() : 1;
   const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true });
   const sprite = new THREE.Sprite(spriteMat);
   
@@ -1655,8 +1662,8 @@ function create3DDuckTag(duckGroup, name, accessory) {
   else if (accessory === 'top_hat' || accessory === 'mohawk' || accessory === 'captain_hat') tagY = 38;
   else if (accessory !== 'none') tagY = 35;
   
-  sprite.position.set(14, tagY, 0);
-  sprite.scale.set(40, 10, 1);
+  sprite.position.set(14, tagY + 4, 0);
+  sprite.scale.set(58, 16, 1);
   sprite.name = 'tag';
   duckGroup.add(sprite);
 }

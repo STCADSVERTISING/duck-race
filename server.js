@@ -20,6 +20,11 @@ const io = new Server(httpServer, {
 // We will keep a dictionary of room states loaded/saved on demand
 const rooms = {};
 
+function normalizeRoomId(roomId) {
+  const cleanRoomId = String(roomId || 'default').replace(/[^a-zA-Z0-9_-]/g, '');
+  return cleanRoomId || 'default';
+}
+
 // Default initial state template for any new room
 function createInitialState() {
   return {
@@ -45,11 +50,11 @@ function createInitialState() {
 
 // Load state for a specific room ID
 function getRoomState(roomId) {
-  if (rooms[roomId]) {
-    return rooms[roomId];
+  const cleanRoomId = normalizeRoomId(roomId);
+  if (rooms[cleanRoomId]) {
+    return rooms[cleanRoomId];
   }
 
-  const cleanRoomId = roomId.replace(/[^a-zA-Z0-9_-]/g, '');
   const stateFilePath = path.join(__dirname, `race_state_${cleanRoomId}.json`);
   let roomState = createInitialState();
 
@@ -68,16 +73,16 @@ function getRoomState(roomId) {
     console.error(`Error loading state for room [${cleanRoomId}]:`, err);
   }
 
-  rooms[roomId] = roomState;
+  rooms[cleanRoomId] = roomState;
   return roomState;
 }
 
 // Save state for a specific room ID
 function saveRoomState(roomId) {
-  const roomState = rooms[roomId];
+  const cleanRoomId = normalizeRoomId(roomId);
+  const roomState = rooms[cleanRoomId];
   if (!roomState) return;
 
-  const cleanRoomId = roomId.replace(/[^a-zA-Z0-9_-]/g, '');
   const stateFilePath = path.join(__dirname, `race_state_${cleanRoomId}.json`);
 
   try {
@@ -125,7 +130,19 @@ io.on('connection', (socket) => {
   socket.on('identify', (data) => {
     // Gracefully handle string-only identification (legacy fallback) or structured object
     let role = typeof data === 'string' ? data : data.role;
-    let roomId = (data && data.roomId) ? String(data.roomId) : 'default';
+    let roomId = normalizeRoomId((data && data.roomId) ? data.roomId : 'default');
+
+    if (!['admin', 'game'].includes(role)) {
+      return;
+    }
+
+    if (socketRoomId && socketRole) {
+      const previousConn = getRoomConnections(socketRoomId);
+      if (socketRole === 'admin') previousConn.admin = Math.max(0, previousConn.admin - 1);
+      if (socketRole === 'game') previousConn.game = Math.max(0, previousConn.game - 1);
+      socket.leave(socketRoomId);
+      sendRoomAdminStats(socketRoomId);
+    }
 
     socketRoomId = roomId;
     socketRole = role;

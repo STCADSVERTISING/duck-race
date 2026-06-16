@@ -36,7 +36,7 @@ const RIVER_BOTTOM = VIEW_HEIGHT;
 const RIVER_PADDING = 30;
 const START_LINE_X = 90;
 const RIVER_3D_HALF_WIDTH = 310;
-const CAMERA_FOLLOW_SPEED = 0.28;
+const CAMERA_FOLLOW_SPEED = 0.38;
 
 // Local State
 let ducks = [];
@@ -1127,17 +1127,17 @@ function updateRaceCamera() {
   const racingDucks = ducks.filter(d => d.rank === null);
   const focusDucks = racingDucks.length ? racingDucks : ducks;
   const sortedByX = [...focusDucks].sort((a, b) => b.x - a.x);
-  const packSize = Math.max(2, Math.ceil(sortedByX.length * 0.6));
+  const packSize = Math.max(2, Math.ceil(sortedByX.length * 0.3));
   const leadPack = sortedByX.slice(0, packSize);
   const leaderX = sortedByX[0]?.x || 0;
   const packCenterX = leadPack.reduce((sum, d) => sum + d.x, 0) / leadPack.length;
   const packSpeed = leadPack.reduce((sum, d) => sum + Math.max(0, d.speed || 0), 0) / leadPack.length;
-  const focusX = Math.max(packCenterX, leaderX - 150);
-  const lookAhead = Math.min(160, 45 + packSpeed * 7);
+  const focusX = Math.max(packCenterX, leaderX - 30);
+  const lookAhead = Math.min(300, 130 + packSpeed * 10);
   const maxCameraX = Math.max(0, COURSE_LENGTH - VIEW_WIDTH + 260);
-  const targetCamX = Math.max(0, Math.min(maxCameraX, focusX + lookAhead - VIEW_WIDTH * 0.62));
+  const targetCamX = Math.max(0, Math.min(maxCameraX, focusX + lookAhead - VIEW_WIDTH * 0.34));
   const distance = Math.abs(targetCamX - cameraX);
-  const followSpeed = distance > 220 ? 0.46 : CAMERA_FOLLOW_SPEED;
+  const followSpeed = distance > 180 ? 0.58 : CAMERA_FOLLOW_SPEED;
   cameraX += (targetCamX - cameraX) * followSpeed;
 }
 
@@ -1192,8 +1192,8 @@ function init3D() {
   scene.fog = new THREE.FogExp2('#87ceeb', 0.0004); // Atmospheric fog
 
   // 3. Initialize Camera
-  camera = new THREE.PerspectiveCamera(46, VIEW_WIDTH / VIEW_HEIGHT, 1, 10000);
-  camera.position.set(0, 210, 430); // x, y, z
+  camera = new THREE.PerspectiveCamera(43, VIEW_WIDTH / VIEW_HEIGHT, 1, 10000);
+  camera.position.set(0, 330, 560); // x, y, z
 
   // 4. Initialize Lights
   const ambientLight = new THREE.AmbientLight('#ffffff', 0.55);
@@ -1733,13 +1733,13 @@ function render3D() {
   const avgLaneZ = focusDucks.length
     ? focusDucks.reduce((sum, d) => sum + mapCanvasYTo3DZ(d.y), 0) / focusDucks.length
     : 0;
-  const targetCamY = 135 + tScale * 120;
-  const targetCamZ = 360 + tScale * 210;
+  const targetCamY = 275 + tScale * 155;
+  const targetCamZ = 520 + tScale * 235;
 
-  camera.position.x += (cameraX - camera.position.x) * 0.32;
-  camera.position.y += (targetCamY - camera.position.y) * 0.08;
-  camera.position.z += (targetCamZ - camera.position.z) * 0.08;
-  camera.lookAt(new THREE.Vector3(camera.position.x + 150, 4, avgLaneZ * 0.18));
+  camera.position.x += (cameraX - camera.position.x) * 0.48;
+  camera.position.y += (targetCamY - camera.position.y) * 0.12;
+  camera.position.z += (targetCamZ - camera.position.z) * 0.12;
+  camera.lookAt(new THREE.Vector3(camera.position.x + 190, 35, avgLaneZ * 0.14));
 
   if (sunLight) {
     sunLight.position.x = camera.position.x + 300;

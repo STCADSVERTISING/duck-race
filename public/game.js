@@ -1072,11 +1072,13 @@ function updatePhysics() {
     // Smooth acceleration off the line with lively but controlled mid-race surges.
     const accelerationCurve = 1 - Math.pow(1 - clampedProgress, 1.45);
     const lateSettle = clampedProgress > 0.84 ? (1 - (clampedProgress - 0.84) / 0.16) : 1;
+    const finishDrive = Math.max(0, Math.min(1, (clampedProgress - 0.82) / 0.18));
     const wave1 = Math.sin(clampedProgress * Math.PI * d.freq1 + d.phase1) * d.amp1;
     const wave2 = Math.cos(clampedProgress * Math.PI * d.freq2 + d.phase2) * d.amp2;
     const burst = Math.sin(elapsed * 2.7 + d.burstPhase) * 0.006 * raceEnvelope;
     const finishBias = 0;
     let targetProgress = accelerationCurve * d.cruiseBias + (wave1 + wave2) * raceEnvelope * Math.max(0.15, lateSettle) + burst + finishBias;
+    targetProgress = Math.max(targetProgress, clampedProgress + finishDrive * 0.018);
     if (duckProgress >= 1) {
       targetProgress = 1 + Math.min(0.12, (duckProgress - 1) * 0.45) + (ducks.length - d.targetRank) * 0.0015;
     }
@@ -1105,10 +1107,10 @@ function updatePhysics() {
     
     let dx = targetX - d.x;
     
-    // Faster pursuit makes the race feel physical and keeps the camera from outrunning the field.
-    let easeFactor = 0.2;
+    // Drive through the finish line instead of easing to a near-stop in front of it.
+    let easeFactor = 0.22 + finishDrive * 0.16;
     if (duckProgress >= 1.0) {
-      easeFactor = 0.2;
+      easeFactor = 0.34;
     }
     
     d.x += dx * easeFactor;

@@ -1,15 +1,35 @@
-// Preset Color Palettes & 10 Beautifully Designed Custom Duck Styles
+// Preset Color Palettes & 30 Beautifully Designed Custom Duck Styles
 const DUCK_STYLES = [
-  { name: 'Classic Yellow 💛', color: '#ffd700', wingColor: '#e5c100', beakColor: '#ff6600', accessory: 'none' },
-  { name: 'Cool Captain 🧑‍✈️', color: '#f3f4f6', wingColor: '#cbd5e1', beakColor: '#ff6600', accessory: 'captain_hat' },
-  { name: 'Rubber Pirate 🏴‍☠️', color: '#475569', wingColor: '#334155', beakColor: '#e11d48', accessory: 'pirate_patch' },
-  { name: 'Neon Cyber ⚡', color: '#39ff14', wingColor: '#2bb50e', beakColor: '#ff007f', accessory: 'neon_sunglasses' },
-  { name: 'Princess Pink 🌸', color: '#f72585', wingColor: '#b5179e', beakColor: '#ffd166', accessory: 'none' },
-  { name: 'Gentleman Slate 🎩', color: '#1e293b', wingColor: '#0f172a', beakColor: '#d97706', accessory: 'gentleman_hat' },
-  { name: 'Unicorn Pastel 🦄', color: '#c084fc', wingColor: '#a855f7', beakColor: '#fb7185', accessory: 'unicorn_horn' },
-  { name: 'Super Hero Red 🦸', color: '#ef4444', wingColor: '#b91c1c', beakColor: '#fbbf24', accessory: 'hero_mask' },
-  { name: 'Aqua Diver 🤿', color: '#06b6d4', wingColor: '#0891b2', beakColor: '#f97316', accessory: 'diver_goggles' },
-  { name: 'Gold Laurel 🏆', color: '#fbbf24', wingColor: '#d97706', beakColor: '#ea580c', accessory: 'gold_laurel' }
+  { name: 'Classic Yellow', color: '#ffd700', wingColor: '#e5c100', beakColor: '#ff6600', accessory: 'none' },
+  { name: 'Cool Captain', color: '#f3f4f6', wingColor: '#cbd5e1', beakColor: '#ff6600', accessory: 'captain_hat' },
+  { name: 'Midnight Slate', color: '#475569', wingColor: '#334155', beakColor: '#e11d48', accessory: 'bandana', accessoryColor: '#ef4444' },
+  { name: 'Neon Lime', color: '#39ff14', wingColor: '#2bb50e', beakColor: '#ff007f', accessory: 'sunglasses', accessoryColor: '#00e5ff' },
+  { name: 'Princess Pink', color: '#f72585', wingColor: '#b5179e', beakColor: '#ffd166', accessory: 'party_hat', accessoryColor: '#ffd700' },
+  { name: 'Gentleman Navy', color: '#1e293b', wingColor: '#0f172a', beakColor: '#d97706', accessory: 'top_hat', accessoryColor: '#ef4444' },
+  { name: 'Lavender Pop', color: '#c084fc', wingColor: '#a855f7', beakColor: '#fb7185', accessory: 'glasses', accessoryColor: '#ffffff' },
+  { name: 'Hero Red', color: '#ef4444', wingColor: '#b91c1c', beakColor: '#fbbf24', accessory: 'sunglasses', accessoryColor: '#111111' },
+  { name: 'Aqua Diver', color: '#06b6d4', wingColor: '#0891b2', beakColor: '#f97316', accessory: 'glasses', accessoryColor: '#0ea5e9' },
+  { name: 'Gold Medal', color: '#fbbf24', wingColor: '#d97706', beakColor: '#ea580c', accessory: 'none' },
+  { name: 'Mint Splash', color: '#2dd4bf', wingColor: '#0f766e', beakColor: '#fb923c', accessory: 'headphones', accessoryColor: '#14b8a6' },
+  { name: 'Berry Jam', color: '#a21caf', wingColor: '#701a75', beakColor: '#facc15', accessory: 'party_hat', accessoryColor: '#22d3ee' },
+  { name: 'Sky Runner', color: '#38bdf8', wingColor: '#0284c7', beakColor: '#f97316', accessory: 'captain_hat' },
+  { name: 'Forest Moss', color: '#65a30d', wingColor: '#3f6212', beakColor: '#f59e0b', accessory: 'bandana', accessoryColor: '#f97316' },
+  { name: 'Coral Reef', color: '#fb7185', wingColor: '#e11d48', beakColor: '#fde047', accessory: 'glasses', accessoryColor: '#fde68a' },
+  { name: 'Royal Blue', color: '#2563eb', wingColor: '#1d4ed8', beakColor: '#fbbf24', accessory: 'top_hat', accessoryColor: '#facc15' },
+  { name: 'Tangerine', color: '#f97316', wingColor: '#c2410c', beakColor: '#fde047', accessory: 'none' },
+  { name: 'Cotton Candy', color: '#f9a8d4', wingColor: '#ec4899', beakColor: '#facc15', accessory: 'party_hat', accessoryColor: '#a78bfa' },
+  { name: 'Cyber Teal', color: '#00f5d4', wingColor: '#00bbf9', beakColor: '#fee440', accessory: 'sunglasses', accessoryColor: '#f15bb5' },
+  { name: 'Ruby Flash', color: '#dc2626', wingColor: '#991b1b', beakColor: '#fb923c', accessory: 'mohawk', accessoryColor: '#facc15' },
+  { name: 'Emerald Ace', color: '#10b981', wingColor: '#047857', beakColor: '#f59e0b', accessory: 'captain_hat' },
+  { name: 'Plum Night', color: '#7e22ce', wingColor: '#581c87', beakColor: '#fbbf24', accessory: 'headphones', accessoryColor: '#c084fc' },
+  { name: 'Snow Puff', color: '#f8fafc', wingColor: '#e2e8f0', beakColor: '#fb923c', accessory: 'bandana', accessoryColor: '#0ea5e9' },
+  { name: 'Lemon Zing', color: '#fef08a', wingColor: '#fde047', beakColor: '#f97316', accessory: 'glasses', accessoryColor: '#111827' },
+  { name: 'Ocean Deep', color: '#0f766e', wingColor: '#115e59', beakColor: '#facc15', accessory: 'sunglasses', accessoryColor: '#e0f2fe' },
+  { name: 'Rose Gold', color: '#fda4af', wingColor: '#fb7185', beakColor: '#f59e0b', accessory: 'top_hat', accessoryColor: '#f9a8d4' },
+  { name: 'Graphite Pro', color: '#374151', wingColor: '#111827', beakColor: '#f97316', accessory: 'headphones', accessoryColor: '#22d3ee' },
+  { name: 'Violet Bolt', color: '#8b5cf6', wingColor: '#6d28d9', beakColor: '#facc15', accessory: 'mohawk', accessoryColor: '#22c55e' },
+  { name: 'Peach Soda', color: '#fdba74', wingColor: '#fb923c', beakColor: '#fef3c7', accessory: 'party_hat', accessoryColor: '#fb7185' },
+  { name: 'Arctic Cyan', color: '#67e8f9', wingColor: '#22d3ee', beakColor: '#f97316', accessory: 'captain_hat' }
 ];
 
 const socket = io();
@@ -419,6 +439,10 @@ function changeDuckStyle(duckId, styleIndex) {
   if (duck) {
     duck.styleIndex = idx;
     duck.color = style.color;
+    duck.wingColor = style.wingColor;
+    duck.beakColor = style.beakColor;
+    duck.accessory = style.accessory || 'none';
+    duck.accessoryColor = style.accessoryColor || '#ffffff';
     
     // Dynamically update color dot locally for instant visual feedback
     const dot = document.getElementById(`dot-color-${duckId}`);
@@ -429,7 +453,11 @@ function changeDuckStyle(duckId, styleIndex) {
       id: d.id,
       name: d.name,
       color: d.color,
-      styleIndex: d.styleIndex
+      styleIndex: d.styleIndex,
+      wingColor: d.wingColor,
+      beakColor: d.beakColor,
+      accessory: d.accessory,
+      accessoryColor: d.accessoryColor
     })));
     
     showToast(`🎨 Changed style of ${duck.name} to ${style.name}`);

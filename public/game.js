@@ -69,18 +69,38 @@ let showDuckNumbers = true;
 let showDuckLogo = false;
 let currentLanguage = 'en'; // Force English-only interface
 
-// Preset Color Palettes & 10 Beautifully Designed Custom Duck Styles
+// Preset Color Palettes & 30 Beautifully Designed Custom Duck Styles
 const DUCK_STYLES = [
-  { name: 'Classic Yellow 💛', thName: 'Classic Yellow 💛', color: '#ffd700', wingColor: '#e5c100', beakColor: '#ff6600', accessory: 'none' },
-  { name: 'Cool Captain 🧑‍✈️', thName: 'Cool Captain 🧑‍✈️', color: '#f3f4f6', wingColor: '#cbd5e1', beakColor: '#ff6600', accessory: 'captain_hat' },
-  { name: 'Rubber Pirate 🏴‍☠️', thName: 'Rubber Pirate 🏴‍☠️', color: '#475569', wingColor: '#334155', beakColor: '#e11d48', accessory: 'pirate_patch' },
-  { name: 'Neon Cyber ⚡', thName: 'Neon Cyber ⚡', color: '#39ff14', wingColor: '#2bb50e', beakColor: '#ff007f', accessory: 'neon_sunglasses' },
-  { name: 'Princess Pink 🌸', thName: 'Princess Pink 🌸', color: '#f72585', wingColor: '#b5179e', beakColor: '#ffd166', accessory: 'none' },
-  { name: 'Gentleman Slate 🎩', thName: 'Gentleman Slate 🎩', color: '#1e293b', wingColor: '#0f172a', beakColor: '#d97706', accessory: 'gentleman_hat' },
-  { name: 'Unicorn Pastel 🦄', thName: 'Unicorn Pastel 🦄', color: '#c084fc', wingColor: '#a855f7', beakColor: '#fb7185', accessory: 'unicorn_horn' },
-  { name: 'Super Hero Red 🦸', thName: 'Super Hero Red 🦸', color: '#ef4444', wingColor: '#b91c1c', beakColor: '#fbbf24', accessory: 'hero_mask' },
-  { name: 'Aqua Diver 🤿', thName: 'Aqua Diver 🤿', color: '#06b6d4', wingColor: '#0891b2', beakColor: '#f97316', accessory: 'diver_goggles' },
-  { name: 'Gold Laurel 🏆', thName: 'Gold Laurel 🏆', color: '#fbbf24', wingColor: '#d97706', beakColor: '#ea580c', accessory: 'gold_laurel' }
+  { name: 'Classic Yellow', thName: 'Classic Yellow', color: '#ffd700', wingColor: '#e5c100', beakColor: '#ff6600', accessory: 'none' },
+  { name: 'Cool Captain', thName: 'Cool Captain', color: '#f3f4f6', wingColor: '#cbd5e1', beakColor: '#ff6600', accessory: 'captain_hat' },
+  { name: 'Midnight Slate', thName: 'Midnight Slate', color: '#475569', wingColor: '#334155', beakColor: '#e11d48', accessory: 'bandana', accessoryColor: '#ef4444' },
+  { name: 'Neon Lime', thName: 'Neon Lime', color: '#39ff14', wingColor: '#2bb50e', beakColor: '#ff007f', accessory: 'sunglasses', accessoryColor: '#00e5ff' },
+  { name: 'Princess Pink', thName: 'Princess Pink', color: '#f72585', wingColor: '#b5179e', beakColor: '#ffd166', accessory: 'party_hat', accessoryColor: '#ffd700' },
+  { name: 'Gentleman Navy', thName: 'Gentleman Navy', color: '#1e293b', wingColor: '#0f172a', beakColor: '#d97706', accessory: 'top_hat', accessoryColor: '#ef4444' },
+  { name: 'Lavender Pop', thName: 'Lavender Pop', color: '#c084fc', wingColor: '#a855f7', beakColor: '#fb7185', accessory: 'glasses', accessoryColor: '#ffffff' },
+  { name: 'Hero Red', thName: 'Hero Red', color: '#ef4444', wingColor: '#b91c1c', beakColor: '#fbbf24', accessory: 'sunglasses', accessoryColor: '#111111' },
+  { name: 'Aqua Diver', thName: 'Aqua Diver', color: '#06b6d4', wingColor: '#0891b2', beakColor: '#f97316', accessory: 'glasses', accessoryColor: '#0ea5e9' },
+  { name: 'Gold Medal', thName: 'Gold Medal', color: '#fbbf24', wingColor: '#d97706', beakColor: '#ea580c', accessory: 'none' },
+  { name: 'Mint Splash', thName: 'Mint Splash', color: '#2dd4bf', wingColor: '#0f766e', beakColor: '#fb923c', accessory: 'headphones', accessoryColor: '#14b8a6' },
+  { name: 'Berry Jam', thName: 'Berry Jam', color: '#a21caf', wingColor: '#701a75', beakColor: '#facc15', accessory: 'party_hat', accessoryColor: '#22d3ee' },
+  { name: 'Sky Runner', thName: 'Sky Runner', color: '#38bdf8', wingColor: '#0284c7', beakColor: '#f97316', accessory: 'captain_hat' },
+  { name: 'Forest Moss', thName: 'Forest Moss', color: '#65a30d', wingColor: '#3f6212', beakColor: '#f59e0b', accessory: 'bandana', accessoryColor: '#f97316' },
+  { name: 'Coral Reef', thName: 'Coral Reef', color: '#fb7185', wingColor: '#e11d48', beakColor: '#fde047', accessory: 'glasses', accessoryColor: '#fde68a' },
+  { name: 'Royal Blue', thName: 'Royal Blue', color: '#2563eb', wingColor: '#1d4ed8', beakColor: '#fbbf24', accessory: 'top_hat', accessoryColor: '#facc15' },
+  { name: 'Tangerine', thName: 'Tangerine', color: '#f97316', wingColor: '#c2410c', beakColor: '#fde047', accessory: 'none' },
+  { name: 'Cotton Candy', thName: 'Cotton Candy', color: '#f9a8d4', wingColor: '#ec4899', beakColor: '#facc15', accessory: 'party_hat', accessoryColor: '#a78bfa' },
+  { name: 'Cyber Teal', thName: 'Cyber Teal', color: '#00f5d4', wingColor: '#00bbf9', beakColor: '#fee440', accessory: 'sunglasses', accessoryColor: '#f15bb5' },
+  { name: 'Ruby Flash', thName: 'Ruby Flash', color: '#dc2626', wingColor: '#991b1b', beakColor: '#fb923c', accessory: 'mohawk', accessoryColor: '#facc15' },
+  { name: 'Emerald Ace', thName: 'Emerald Ace', color: '#10b981', wingColor: '#047857', beakColor: '#f59e0b', accessory: 'captain_hat' },
+  { name: 'Plum Night', thName: 'Plum Night', color: '#7e22ce', wingColor: '#581c87', beakColor: '#fbbf24', accessory: 'headphones', accessoryColor: '#c084fc' },
+  { name: 'Snow Puff', thName: 'Snow Puff', color: '#f8fafc', wingColor: '#e2e8f0', beakColor: '#fb923c', accessory: 'bandana', accessoryColor: '#0ea5e9' },
+  { name: 'Lemon Zing', thName: 'Lemon Zing', color: '#fef08a', wingColor: '#fde047', beakColor: '#f97316', accessory: 'glasses', accessoryColor: '#111827' },
+  { name: 'Ocean Deep', thName: 'Ocean Deep', color: '#0f766e', wingColor: '#115e59', beakColor: '#facc15', accessory: 'sunglasses', accessoryColor: '#e0f2fe' },
+  { name: 'Rose Gold', thName: 'Rose Gold', color: '#fda4af', wingColor: '#fb7185', beakColor: '#f59e0b', accessory: 'top_hat', accessoryColor: '#f9a8d4' },
+  { name: 'Graphite Pro', thName: 'Graphite Pro', color: '#374151', wingColor: '#111827', beakColor: '#f97316', accessory: 'headphones', accessoryColor: '#22d3ee' },
+  { name: 'Violet Bolt', thName: 'Violet Bolt', color: '#8b5cf6', wingColor: '#6d28d9', beakColor: '#facc15', accessory: 'mohawk', accessoryColor: '#22c55e' },
+  { name: 'Peach Soda', thName: 'Peach Soda', color: '#fdba74', wingColor: '#fb923c', beakColor: '#fef3c7', accessory: 'party_hat', accessoryColor: '#fb7185' },
+  { name: 'Arctic Cyan', thName: 'Arctic Cyan', color: '#67e8f9', wingColor: '#22d3ee', beakColor: '#f97316', accessory: 'captain_hat' }
 ];
 
 const TRANSLATIONS = {
@@ -567,22 +587,21 @@ const GORGEOUS_COLORS = [
 const PATTERNS = ['solid', 'stripes', 'zigzag', 'polka_dots'];
 const ACCESSORIES = ['none', 'glasses', 'sunglasses', 'captain_hat', 'bandana', 'mohawk', 'top_hat', 'party_hat', 'headphones'];
 
-function randomizeDuckDesign(d) {
-  const color = GORGEOUS_COLORS[Math.floor(Math.random() * GORGEOUS_COLORS.length)];
-  d.color = color;
-  
-  d.pattern = PATTERNS[Math.floor(Math.random() * PATTERNS.length)];
-  
-  let patternColor = GORGEOUS_COLORS[Math.floor(Math.random() * GORGEOUS_COLORS.length)];
-  while (patternColor === color) {
-    patternColor = GORGEOUS_COLORS[Math.floor(Math.random() * GORGEOUS_COLORS.length)];
-  }
-  d.patternColor = patternColor;
-  
-  d.accessory = ACCESSORIES[Math.floor(Math.random() * ACCESSORIES.length)];
-  d.accessoryColor = GORGEOUS_COLORS[Math.floor(Math.random() * GORGEOUS_COLORS.length)];
-  d.wingColor = GORGEOUS_COLORS[Math.floor(Math.random() * GORGEOUS_COLORS.length)];
-  d.beakColor = ['#ff6600', '#ffd700', '#ff007f', '#ff9f1c'][Math.floor(Math.random() * 4)];
+function applyDuckStyle(d, styleIndex) {
+  const style = DUCK_STYLES[styleIndex] || DUCK_STYLES[0];
+  d.styleIndex = styleIndex;
+  d.color = style.color;
+  d.pattern = 'solid';
+  d.patternColor = style.color;
+  d.accessory = style.accessory || 'none';
+  d.accessoryColor = style.accessoryColor || '#ffffff';
+  d.wingColor = style.wingColor || adjustBrightness(style.color, -16);
+  d.beakColor = style.beakColor || '#ff6600';
+}
+
+function randomizeDuckDesign(d, styleIndex = null) {
+  const nextStyleIndex = styleIndex !== null ? styleIndex : Math.floor(Math.random() * DUCK_STYLES.length);
+  applyDuckStyle(d, nextStyleIndex);
 }
 
 function shuffleCharacters() {
@@ -596,7 +615,7 @@ function shuffleCharacters() {
 }
 
 function initDuckState(duckData) {
-  const styleIdx = duckData.styleIndex !== undefined ? duckData.styleIndex : Math.floor(Math.random() * 10);
+  const styleIdx = duckData.styleIndex !== undefined ? duckData.styleIndex : Math.floor(Math.random() * DUCK_STYLES.length);
   const style = DUCK_STYLES[styleIdx];
   const d = {
     id: duckData.id,
@@ -619,13 +638,11 @@ function initDuckState(duckData) {
   d.pattern = duckData.pattern || 'solid';
   d.patternColor = duckData.patternColor || d.color;
   d.accessory = duckData.accessory || style.accessory || 'none';
-  d.accessoryColor = duckData.accessoryColor || '#ffffff';
+  d.accessoryColor = duckData.accessoryColor || style.accessoryColor || '#ffffff';
   d.wingColor = duckData.wingColor || style.wingColor || adjustBrightness(d.color, -16);
   d.beakColor = duckData.beakColor || style.beakColor || '#ff6600';
 
-  if (!duckData.color || d.pattern === 'solid') {
-    randomizeDuckDesign(d);
-  }
+  if (!duckData.color) randomizeDuckDesign(d, styleIdx);
 
   return d;
 }
@@ -635,7 +652,7 @@ function generateRosterFromSlider() {
 
   const temp = [];
   for (let i = 1; i <= count; i++) {
-    const styleIdx = manualAccessorySet ? currentPaletteIndex : Math.floor(Math.random() * 10);
+    const styleIdx = manualAccessorySet ? currentPaletteIndex : Math.floor(Math.random() * DUCK_STYLES.length);
     const style = DUCK_STYLES[styleIdx];
     const item = {
       id: `duck-num-${i}`,
@@ -643,7 +660,7 @@ function generateRosterFromSlider() {
       styleIndex: styleIdx,
       color: style.color
     };
-    randomizeDuckDesign(item);
+    applyDuckStyle(item, styleIdx);
     temp.push(item);
   }
 
@@ -661,7 +678,7 @@ function updateRosterFromConsoleNames() {
 
   const temp = lines.map((name, index) => {
     const existing = ducks.find(d => d.name === name);
-    const styleIdx = existing ? existing.styleIndex : (manualAccessorySet ? currentPaletteIndex : Math.floor(Math.random() * 10));
+    const styleIdx = existing ? existing.styleIndex : (manualAccessorySet ? currentPaletteIndex : Math.floor(Math.random() * DUCK_STYLES.length));
     const style = DUCK_STYLES[styleIdx];
     const item = {
       id: existing ? existing.id : `duck-${Date.now()}-${index}`,
@@ -669,6 +686,7 @@ function updateRosterFromConsoleNames() {
       styleIndex: styleIdx,
       color: existing ? existing.color : style.color
     };
+    if (!existing) applyDuckStyle(item, styleIdx);
     if (!existing) {
       randomizeDuckDesign(item);
     } else {
@@ -1001,7 +1019,7 @@ function beginRace() {
     d.phase2 = Math.random() * Math.PI * 2;
     d.burstPhase = Math.random() * Math.PI * 2;
     d.laneDriftPhase = Math.random() * Math.PI * 2;
-    d.cruiseBias = 0.965 + Math.random() * 0.07;
+    d.cruiseBias = 1;
     
     // Assign target spacing offset at the finish line
     d.finishOffset = - (d.targetRank - 1) * 0.008;
@@ -1057,7 +1075,7 @@ function updatePhysics() {
     const wave1 = Math.sin(clampedProgress * Math.PI * d.freq1 + d.phase1) * d.amp1;
     const wave2 = Math.cos(clampedProgress * Math.PI * d.freq2 + d.phase2) * d.amp2;
     const burst = Math.sin(elapsed * 2.7 + d.burstPhase) * 0.006 * raceEnvelope;
-    const finishBias = (1 - d.targetRank) * 0.0025 * Math.max(0, clampedProgress - 0.72);
+    const finishBias = 0;
     let targetProgress = accelerationCurve * d.cruiseBias + (wave1 + wave2) * raceEnvelope * Math.max(0.15, lateSettle) + burst + finishBias;
     if (duckProgress >= 1) {
       targetProgress = 1 + Math.min(0.12, (duckProgress - 1) * 0.45) + (ducks.length - d.targetRank) * 0.0015;
